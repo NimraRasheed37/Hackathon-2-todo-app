@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from todo_app.models import Task
+from todo_cli.models import Task
 
 class Storage:
     """Handles reading from and writing to the todos.json file."""

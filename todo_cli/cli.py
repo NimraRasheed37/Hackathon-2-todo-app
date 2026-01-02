@@ -1,6 +1,6 @@
-from todo_app.models import Task
-from todo_app.storage import Storage
-from todo_app.utils import get_non_empty_input, get_optional_input, confirm_action
+from todo_cli.models import Task
+from todo_cli.storage import Storage
+from todo_cli.utils import get_non_empty_input, get_optional_input, confirm_action
 from typing import Optional
 
 
@@ -17,28 +17,35 @@ def add_task_cli(storage: Storage):
 
     new_task = Task(title=title, description=description)
     storage.add_task(new_task)
-    print(f"Task '{new_task.title}' added.")
+    print(f"✅ Task '{new_task.title}' added successfully.")
 
 
 def view_tasks_cli(storage: Storage):
     """
-    CLI function to display all tasks in a formatted list.
+    CLI function to display all tasks in a formatted table.
     Tasks are sorted by creation date.
     """
     tasks = storage.get_all_tasks()
     if not tasks:
-        print("No tasks found.")
+        print("📭 No tasks found. Your to-do list is empty.")
         return
 
     sorted_tasks = sorted(tasks, key=lambda t: t.created_date)
 
-    print("\n--- Your Tasks ---")
+    print("\n┌───────┬──────────┬──────────────────────┬──────────────────────────────────────────┐")
+    print("│ Status│    ID    │        Title         │               Description                │")
+    print("├───────┼──────────┼──────────────────────┼──────────────────────────────────────────┤")
+
     for task in sorted_tasks:
-        status = "[X]" if task.completed else "[ ]"
-        print(f"{status} {task.id[:8]}... | {task.title}")
-        if task.description:
-            print(f"    Description: {task.description}")
-    print("------------------")
+        status = "✅" if task.completed else "❌"
+        task_id = task.id[:8] + "..." if len(task.id) > 8 else task.id
+        title = task.title[:20] + "..." if len(task.title) > 20 else task.title
+        description = task.description or ""
+        description = description[:40] + "..." if len(description) > 40 else description
+
+        print(f"│ {status:^5} │ {task_id:<8} │ {title:<20} │ {description:<40} │")
+
+    print("└───────┴──────────┴──────────────────────┴──────────────────────────────────────────┘")
 
 
 def delete_task_cli(storage: Storage):
@@ -54,16 +61,16 @@ def delete_task_cli(storage: Storage):
     task_to_delete = next((t for t in tasks if t.id.startswith(task_id)), None)
 
     if not task_to_delete:
-        print(f"No task found with ID starting with '{task_id}'.")
+        print(f"❌ No task found with ID starting with '{task_id}'.")
         return
 
     if confirm_action(
         f"Are you sure you want to delete task '{task_to_delete.title}' "
         f"(ID: {task_to_delete.id[:8]}...)? (yes/no): "):
         storage.delete_task(task_to_delete.id)
-        print(f"Task '{task_to_delete.title}' deleted.")
+        print(f"🗑️ Task '{task_to_delete.title}' deleted successfully.")
     else:
-        print("Task deletion cancelled.")
+        print("👍 Task deletion cancelled.")
 
 
 def update_task_cli(storage: Storage):
@@ -79,7 +86,7 @@ def update_task_cli(storage: Storage):
     task_to_update = next((t for t in tasks if t.id.startswith(task_id)), None)
 
     if not task_to_update:
-        print(f"No task found with ID starting with '{task_id}'.")
+        print(f"❌ No task found with ID starting with '{task_id}'.")
         return
 
     print(f"Current Title: {task_to_update.title}")
@@ -89,16 +96,16 @@ def update_task_cli(storage: Storage):
     new_description = get_optional_input("Enter new description (leave blank to keep current): ")
 
     if new_title is None and new_description is None:
-        print("No changes provided. Task not updated.")
+        print("🤷 No changes provided. Task not updated.")
         return
 
     storage.update_task(task_to_update.id, new_title, new_description)
 
     updated_task = next((t for t in storage.get_all_tasks() if t.id == task_to_update.id), None)
     if updated_task:
-        print(f"Task '{updated_task.title}' updated.")
+        print(f"✏️ Task '{updated_task.title}' updated successfully.")
     else:
-        print("Task updated, but could not reload updated data.")
+        print("⚠️ Task updated, but could not reload updated data.")
 
 
 def mark_complete_task_cli(storage: Storage):
@@ -117,7 +124,7 @@ def mark_complete_task_cli(storage: Storage):
     task_to_toggle = next((t for t in tasks if t.id.startswith(task_id)), None)
 
     if not task_to_toggle:
-        print(f"No task found with ID starting with '{task_id}'.")
+        print(f"❌ No task found with ID starting with '{task_id}'.")
         return
 
     storage.toggle_task_completion(task_to_toggle.id)
@@ -125,9 +132,9 @@ def mark_complete_task_cli(storage: Storage):
     updated_task = next((t for t in storage.get_all_tasks() if t.id == task_to_toggle.id), None)
     if updated_task:
         status = "completed" if updated_task.completed else "incomplete"
-        print(f"Task '{updated_task.title}' marked as {status}.")
+        print(f"✅ Task '{updated_task.title}' marked as {status}.")
     else:
-        print("Task status changed, but could not reload updated data.")
+        print("⚠️ Task status changed, but could not reload updated data.")
 
 
 def run_cli():

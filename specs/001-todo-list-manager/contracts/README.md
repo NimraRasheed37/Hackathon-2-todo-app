@@ -12,4 +12,4 @@ The primary "contract" is the structure of the `todos.json` file, which is detai
 
 ## Internal Module Contracts
 
-Internal contracts will be defined by the Python module interfaces within the `todo_app/` directory (e.g., `storage.py`'s functions for reading/writing tasks, `models.py`'s `Task` class interface). These will be implicitly defined through the Python code itself, adhering to clear function signatures and type hints as per the project constitution.
+Internal contracts will be defined by the Python module interfaces within the `todo_cli/` directory (e.g., `storage.py`'s functions for reading/writing tasks, `models.py`'s `Task` class interface). These will be implicitly defined through the Python code itself, adhering to clear function signatures and type hints as per the project constitution.

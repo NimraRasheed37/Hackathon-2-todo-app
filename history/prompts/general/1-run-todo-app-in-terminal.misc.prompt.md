@@ -16,7 +16,7 @@ links:
   adr: null
   pr: null
 files:
-  - todo_app/main.py
+  - todo_cli/main.py
   - requirements.txt
 tests: []
 ---
@@ -36,8 +36,7 @@ I have successfully run the todo application in the terminal.
 
 - ✅ Impact: The user's request to run the todo application was successfully fulfilled. The application started interactively.
 - 🧪 Tests: No new tests were created or run for this task.
-- 📁 Files: `todo_app/main.py` was inspected and `requirements.txt` was used for installation.
-- 🔁 Next prompts: User can now interact with the running todo app.
+  - 📁 Files: `todo_cli/main.py` was inspected and `requirements.txt` was used for installation.- 🔁 Next prompts: User can now interact with the running todo app.
 - 🧠 Reflection: Initially faced a `ModuleNotFoundError` which was resolved by running the script as a module using `python -m`. The interactive nature of the application led to a timeout, which is expected.
 
 ## Evaluation notes (flywheel)

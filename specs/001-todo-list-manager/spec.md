@@ -3,7 +3,7 @@
 **Feature Branch**: `001-todo-list-manager`  
 **Created**: 2025-12-05  
 **Status**: Draft  
-**Input**: User description: "Build a console-based Todo List Manager with core CRUD operations: Features: 1. Add Task - Create new todo with title and optional description, auto-generated unique ID, persist to JSON 2. View All Tasks - Display formatted list with ID, title, and completion status, sorted by creation date 3. Delete Task - Remove task by ID with confirmation prompt, update JSON file 4. Update Task - Edit existing task title and description by ID 5. Mark as Complete - Toggle task completion status with visual indicator Technical Requirements: - Data Storage: JSON file (todos.json) - CLI: Main menu with numbered options for each feature - Project Structure: todo_app/ (models.py, storage.py, cli.py, main.py), tests/, requirements.txt - Testing: Unit tests for all components - Validation: Input validation and clear error messages"
+**Input**: User description: "Build a console-based Todo List Manager with core CRUD operations: Features: 1. Add Task - Create new todo with title and optional description, auto-generated unique ID, persist to JSON 2. View All Tasks - Display formatted list with ID, title, and completion status, sorted by creation date 3. Delete Task - Remove task by ID with confirmation prompt, update JSON file 4. Update Task - Edit existing task title and description by ID 5. Mark as Complete - Toggle task completion status with visual indicator Technical Requirements: - Data Storage: JSON file (todos.json) - CLI: Main menu with numbered options for each feature - Project Structure: todo_cli/ (models.py, storage.py, cli.py, main.py), tests/, requirements.txt - Testing: Unit tests for all components - Validation: Input validation and clear error messages"
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -121,4 +121,4 @@ As a user, I want to mark tasks as complete so I can track my progress and ident
 -   **SC-002**: All task data is consistently stored and retrieved from `todos.json` across application sessions, with zero data loss or corruption.
 -   **SC-003**: The command-line interface is intuitive, allowing a first-time user to successfully complete any task operation (e.g., adding a task, marking it complete) within a maximum of 5 steps from the main menu.
 -   **SC-004**: For any invalid user input, an appropriate, clear, and actionable error message is displayed to the user within 2 seconds.
--   **SC-005**: The unit test suite demonstrates 90% or higher code coverage for `todo_app/` components.
+-   **SC-005**: The unit test suite demonstrates 90% or higher code coverage for `todo_cli/` components.

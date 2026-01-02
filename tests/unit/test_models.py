@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime
 import uuid
-from todo_app.models import Task
+from todo_cli.models import Task
 
 def test_task_creation():
     title = "Test Task"
