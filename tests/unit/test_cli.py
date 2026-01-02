@@ -1,11 +1,11 @@
 import pytest
 from unittest.mock import patch
 from io import StringIO # Still useful for some custom mocking if needed, but not for direct stdout capture now
-from todo_app.cli import add_task_cli, view_tasks_cli, delete_task_cli, update_task_cli, mark_complete_task_cli
-from todo_app.storage import Storage
-from todo_app.models import Task
+from todo_cli.cli import add_task_cli, view_tasks_cli, delete_task_cli, update_task_cli, mark_complete_task_cli
+from todo_cli.storage import Storage
+from todo_cli.models import Task
 from pathlib import Path
-from todo_app import utils # Import utils to patch its functions, if needed for other tests
+from todo_cli import utils # Import utils to patch its functions, if needed for other tests
 
 # Fixture for a temporary storage file to isolate tests
 @pytest.fixture
@@ -37,7 +37,7 @@ def test_add_task_cli_adds_and_persists_task(cli_storage, capsys):
         add_task_cli(cli_storage)
     
     captured = capsys.readouterr()
-    assert "Task 'New Task Title' added." in captured.out
+    assert "✅ Task 'New Task Title' added successfully." in captured.out
     
     tasks_in_storage = cli_storage.load_tasks()
     assert len(tasks_in_storage) == 1
@@ -55,7 +55,7 @@ def test_add_task_cli_adds_task_without_description(cli_storage, capsys):
         add_task_cli(cli_storage)
     
     captured = capsys.readouterr()
-    assert "Task 'Task without Desc' added." in captured.out
+    assert "✅ Task 'Task without Desc' added successfully." in captured.out
     
     tasks_in_storage = cli_storage.load_tasks()
     assert len(tasks_in_storage) == 1
@@ -72,7 +72,7 @@ def test_add_task_cli_empty_title(cli_storage, capsys):
 
     captured = capsys.readouterr()
     assert "Task title cannot be empty." in captured.out
-    assert "Task 'Valid Title' added." in captured.out # Should eventually add with valid title
+    assert "✅ Task 'Valid Title' added successfully." in captured.out # Should eventually add with valid title
     assert len(cli_storage.load_tasks()) == 1
 
 
@@ -88,7 +88,7 @@ def test_view_tasks_cli_empty_list(cli_storage, capsys):
     """
     view_tasks_cli(cli_storage)
     captured = capsys.readouterr()
-    assert "No tasks found." in captured.out
+    assert "📭 No tasks found. Your to-do list is empty." in captured.out
 
 def test_view_tasks_cli_single_task(cli_storage, capsys):
     """
@@ -99,22 +99,33 @@ def test_view_tasks_cli_single_task(cli_storage, capsys):
     
     view_tasks_cli(cli_storage)
     captured = capsys.readouterr()
-    assert "--- Your Tasks ---" in captured.out
-    assert f"[ ] {task.id[:8]}... | Single Task View" in captured.out
-    assert "------------------" in captured.out
+    
+    assert "┌───────┬──────────┬──────────────────────┬──────────────────────────────────────────┐" in captured.out
+    assert "│ Status│    ID    │        Title         │               Description                │" in captured.out
+    assert "├───────┼──────────┼──────────────────────┼──────────────────────────────────────────┤" in captured.out
+    
+    task_id = task.id[:8] + "..."
+    status = "❌"
+    title = "Single Task View"
+    description = ""
+    
+    expected_row = f"│ {status:^5} │ {task_id:<8} │ {title:<20} │ {description:<40} │"
+    assert expected_row in captured.out
+    
+    assert "└───────┴──────────┴──────────────────────┴──────────────────────────────────────────┘" in captured.out
 
 def test_view_tasks_cli_multiple_tasks_sorted(cli_storage, capsys):
     """
     Test that view_tasks_cli correctly displays multiple tasks sorted by created_date.
     """
     task1 = Task(title="Task Z", description="Desc Z")
-    task1.created_date = "2025-01-01T12:00:00.000000" # Use specific date for sorting
-    
+    task1.created_date = "2025-01-01T12:00:00.000000"  # Use specific date for sorting
+
     task2 = Task(title="Task A", completed=True)
-    task2.created_date = "2025-01-01T10:00:00.000000" # Use specific date for sorting
-    
+    task2.created_date = "2025-01-01T10:00:00.000000"  # Use specific date for sorting
+
     task3 = Task(title="Task M", description="Desc M")
-    task3.created_date = "2024-12-31T23:59:59.000000" # Use specific date for sorting
+    task3.created_date = "2024-12-31T23:59:59.000000"  # Use specific date for sorting
 
     # Add tasks in non-sorted order to ensure sorting logic in cli is tested
     cli_storage.add_task(task1)
@@ -123,18 +134,23 @@ def test_view_tasks_cli_multiple_tasks_sorted(cli_storage, capsys):
 
     view_tasks_cli(cli_storage)
     captured = capsys.readouterr()
-    
+
     output_lines = [line.strip() for line in captured.out.split('\n') if line.strip()]
 
     # Expected order based on created_date (task3, task2, task1)
     # Task M (earliest), Task A, Task Z (latest)
-    assert f"[ ] {task3.id[:8]}... | {task3.title}" in output_lines
-    assert f"[X] {task2.id[:8]}... | {task2.title}" in output_lines
-    assert f"[ ] {task1.id[:8]}... | {task1.title}" in output_lines
+    
+    task1_id = task1.id[:8] + "..."
+    task2_id = task2.id[:8] + "..."
+    task3_id = task3.id[:8] + "..."
 
-    # Check descriptions
-    assert f"Description: {task3.description}" in output_lines
-    assert f"Description: {task1.description}" in output_lines
+    expected_row1 = f"│   ❌   │ {task3_id:<8} │ {'Task M':<20} │ {'Desc M':<40} │"
+    expected_row2 = f"│   ✅   │ {task2_id:<8} │ {'Task A':<20} │ {'':<40} │"
+    expected_row3 = f"│   ❌   │ {task1_id:<8} │ {'Task Z':<20} │ {'Desc Z':<40} │"
+    
+    assert expected_row1 in captured.out
+    assert expected_row2 in captured.out
+    assert expected_row3 in captured.out
 
 
 def test_view_tasks_cli_with_completed_task(cli_storage, capsys):
@@ -144,7 +160,14 @@ def test_view_tasks_cli_with_completed_task(cli_storage, capsys):
 
     view_tasks_cli(cli_storage)
     captured = capsys.readouterr()
-    assert f"[X] {task.id[:8]}... | Completed Task" in captured.out
+
+    task_id = task.id[:8] + "..."
+    status = "✅"
+    title = "Completed Task"
+    description = ""
+
+    expected_row = f"│ {status:^5} │ {task_id:<8} │ {title:<20} │ {description:<40} │"
+    assert expected_row in captured.out
 
 # --- Tests for delete_task_cli (from T022) --- 
 def test_delete_task_cli_deletes_existing_task(cli_storage, capsys):
@@ -161,7 +184,7 @@ def test_delete_task_cli_deletes_existing_task(cli_storage, capsys):
         delete_task_cli(cli_storage)
 
     captured = capsys.readouterr()
-    assert f"Task '{task_to_delete.title}' deleted." in captured.out
+    assert f"🗑️ Task '{task_to_delete.title}' deleted successfully." in captured.out
     
     remaining_tasks = cli_storage.load_tasks()
     assert len(remaining_tasks) == 1
@@ -179,7 +202,7 @@ def test_delete_task_cli_cancels_deletion(cli_storage, capsys):
         delete_task_cli(cli_storage)
 
     captured = capsys.readouterr()
-    assert "Task deletion cancelled." in captured.out
+    assert "👍 Task deletion cancelled." in captured.out
     assert len(cli_storage.load_tasks()) == 1 # Task should still be there
 
 def test_delete_task_cli_non_existent_id(cli_storage, capsys):
@@ -194,7 +217,7 @@ def test_delete_task_cli_non_existent_id(cli_storage, capsys):
         delete_task_cli(cli_storage)
 
     captured = capsys.readouterr()
-    assert "No task found with ID starting with 'non-existent-id'." in captured.out
+    assert "❌ No task found with ID starting with 'non-existent-id'." in captured.out
     assert len(cli_storage.load_tasks()) == 1 # Task should still be there
 
 def test_delete_task_cli_empty_id(cli_storage, capsys):
@@ -228,7 +251,7 @@ def test_update_task_cli_updates_title_and_description(cli_storage, capsys):
     captured = capsys.readouterr()
     assert "Current Title: Old Title" in captured.out
     assert "Current Description: Old Desc" in captured.out
-    assert f"Task 'New Title' updated." in captured.out
+    assert f"✏️ Task 'New Title' updated successfully." in captured.out
 
     updated_task = cli_storage.load_tasks()[0]
     assert updated_task.title == "New Title"
@@ -248,7 +271,7 @@ def test_update_task_cli_updates_only_title(cli_storage, capsys):
     captured = capsys.readouterr()
     assert "Current Title: Old Title" in captured.out # These prompts are now explicitly printed
     assert "Current Description: Old Desc" in captured.out # These prompts are now explicitly printed
-    assert f"Task 'New Title Only' updated." in captured.out
+    assert f"✏️ Task 'New Title Only' updated successfully." in captured.out
 
     updated_task = cli_storage.load_tasks()[0]
     assert updated_task.title == "New Title Only"
@@ -268,7 +291,7 @@ def test_update_task_cli_updates_only_description(cli_storage, capsys):
     captured = capsys.readouterr()
     assert "Current Title: Old Title" in captured.out # These prompts are now explicitly printed
     assert "Current Description: Old Desc" in captured.out # These prompts are now explicitly printed
-    assert f"Task 'Old Title' updated." in captured.out
+    assert f"✏️ Task 'Old Title' updated successfully." in captured.out
 
     updated_task = cli_storage.load_tasks()[0]
     assert updated_task.title == "Old Title" # Title should be unchanged
@@ -288,7 +311,7 @@ def test_update_task_cli_no_changes_provided(cli_storage, capsys):
     captured = capsys.readouterr()
     assert "Current Title: Original" in captured.out
     assert "Current Description: Original" in captured.out
-    assert "No changes provided. Task not updated." in captured.out
+    assert "🤷 No changes provided. Task not updated." in captured.out
     updated_task = cli_storage.load_tasks()[0]
     assert updated_task.title == "Original"
     assert updated_task.description == "Original"

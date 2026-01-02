@@ -21,9 +21,9 @@ This guide provides basic instructions to get the Todo List Manager running and 
     ```
 
 2.  **Navigate to the Application Directory**:
-    The main application logic resides in the `todo_app/` directory.
+    The main application logic resides in the `todo_cli/` directory.
     ```bash
-    cd todo_app/
+    cd todo_cli/
     ```
 
 ## Running the Application

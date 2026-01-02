@@ -5,7 +5,7 @@
 
 ## Summary
 
-Based on the feature specification for the Todo List Manager, the primary requirement is to build a console-based application that allows users to perform core CRUD (Create, Read, Update, Delete) operations on tasks, along with the ability to mark tasks as complete. The technical approach involves using Python 3.11+, persisting data in a local JSON file (`todos.json`), and employing a clear, modular project structure (`todo_app/`) with comprehensive unit testing (`pytest`) and robust input validation. The Command-Line Interface (CLI) will be designed for intuitiveness and user-friendliness.
+Based on the feature specification for the Todo List Manager, the primary requirement is to build a console-based application that allows users to perform core CRUD (Create, Read, Update, Delete) operations on tasks, along with the ability to mark tasks as complete. The technical approach involves using Python 3.11+, persisting data in a local JSON file (`todos.json`), and employing a clear, modular project structure (`todo_cli/`) with comprehensive unit testing (`pytest`) and robust input validation. The Command-Line Interface (CLI) will be designed for intuitiveness and user-friendliness.
 
 ## Technical Context
 
@@ -47,7 +47,7 @@ specs/001-todo-list-manager/
 ### Source Code (repository root)
 
 ```text
-todo_app/
+todo_cli/
 ├── models.py      # Defines the Task data structure
 ├── storage.py     # Handles reading from and writing to todos.json
 ├── cli.py         # Implements the command-line interface logic and user interaction
@@ -63,7 +63,7 @@ tests/
 requirements.txt   # Lists project dependencies (initially empty or just Python version)
 ```
 
-**Structure Decision**: A single project structure is adopted, with `todo_app/` containing the application's source code, modularized into `models`, `storage`, `cli`, and `main` components. `tests/` will house unit tests mirroring the application's module structure. This aligns with the "single project" type and promotes clarity and maintainability.
+**Structure Decision**: A single project structure is adopted, with `todo_cli/` containing the application's source code, modularized into `models`, `storage`, `cli`, and `main` components. `tests/` will house unit tests mirroring the application's module structure. This aligns with the "single project" type and promotes clarity and maintainability.
 
 ## Complexity Tracking
 

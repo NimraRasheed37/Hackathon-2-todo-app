@@ -8,7 +8,7 @@ model: Gemini
 feature: 001-todo-list-manager
 branch: 001-todo-list-manager
 user: 
-command: /sp.specify Build a console-based Todo List Manager with core CRUD operations: Features: 1. Add Task - Create new todo with title and optional description, auto-generated unique ID, persist to JSON 2. View All Tasks - Display formatted list with ID, title, and completion status, sorted by creation date 3. Delete Task - Remove task by ID with confirmation prompt, update JSON file 4. Update Task - Edit existing task title and description by ID 5. Mark as Complete - Toggle task completion status with visual indicator Technical Requirements: - Data Storage: JSON file (todos.json) - CLI: Main menu with numbered options for each feature - Project Structure: todo_app/ (models.py, storage.py, cli.py, main.py), tests/, requirements.txt - Testing: Unit tests for all components - Validation: Input validation and clear error messages
+command: /sp.specify Build a console-based Todo List Manager with core CRUD operations: Features: 1. Add Task - Create new todo with title and optional description, auto-generated unique ID, persist to JSON 2. View All Tasks - Display formatted list with ID, title, and completion status, sorted by creation date 3. Delete Task - Remove task by ID with confirmation prompt, update JSON file 4. Update Task - Edit existing task title and description by ID 5. Mark as Complete - Toggle task completion status with visual indicator Technical Requirements: - Data Storage: JSON file (todos.json) - CLI: Main menu with numbered options for each feature - Project Structure: todo_cli/ (models.py, storage.py, cli.py, main.py), tests/, requirements.txt - Testing: Unit tests for all components - Validation: Input validation and clear error messages
 labels: [spec, feature]
 links:
   spec: specs/001-todo-list-manager/spec.md
@@ -24,7 +24,7 @@ tests:
 
 ## Prompt
 
-Build a console-based Todo List Manager with core CRUD operations: Features: 1. Add Task - Create new todo with title and optional description, auto-generated unique ID, persist to JSON 2. View All Tasks - Display formatted list with ID, title, and completion status, sorted by creation date 3. Delete Task - Remove task by ID with confirmation prompt, update JSON file 4. Update Task - Edit existing task title and description by ID 5. Mark as Complete - Toggle task completion status with visual indicator Technical Requirements: - Data Storage: JSON file (todos.json) - CLI: Main menu with numbered options for each feature - Project Structure: todo_app/ (models.py, storage.py, cli.py, main.py), tests/, requirements.txt - Testing: Unit tests for all components - Validation: Input validation and clear error messages
+Build a console-based Todo List Manager with core CRUD operations: Features: 1. Add Task - Create new todo with title and optional description, auto-generated unique ID, persist to JSON 2. View All Tasks - Display formatted list with ID, title, and completion status, sorted by creation date 3. Delete Task - Remove task by ID with confirmation prompt, update JSON file 4. Update Task - Edit existing task title and description by ID 5. Mark as Complete - Toggle task completion status with visual indicator Technical Requirements: - Data Storage: JSON file (todos.json) - CLI: Main menu with numbered options for each feature - Project Structure: todo_cli/ (models.py, storage.py, cli.py, main.py), tests/, requirements.txt - Testing: Unit tests for all components - Validation: Input validation and clear error messages
 
 ## Response snapshot
 

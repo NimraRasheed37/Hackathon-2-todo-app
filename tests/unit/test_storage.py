@@ -2,8 +2,8 @@ import pytest
 import json
 from pathlib import Path
 from typing import Optional
-from todo_app.storage import Storage
-from todo_app.models import Task
+from todo_cli.storage import Storage
+from todo_cli.models import Task
 
 @pytest.fixture
 def temp_todos_file(tmp_path):

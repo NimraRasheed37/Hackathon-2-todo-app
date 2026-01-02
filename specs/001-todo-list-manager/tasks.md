@@ -15,18 +15,18 @@
 
 ## Path Conventions
 
-- **Single project**: `todo_app/`, `tests/` at repository root
+- **Single project**: `todo_cli/`, `tests/` at repository root
 - Paths shown below assume single project - adjust based on plan.md structure
 
 ## Phase 1: Setup (Shared Infrastructure)
 
 **Purpose**: Project initialization and basic structure
 
-- [X] T001 Create project directory `todo_app/` and `tests/`.
-- [X] T002 Create empty `todo_app/__init__.py` and `tests/__init__.py`.
+- [X] T001 Create project directory `todo_cli/` and `tests/`.
+- [X] T002 Create empty `todo_cli/__init__.py` and `tests/__init__.py`.
 - [X] T003 Create `requirements.txt` with `pytest` dependency at project root.
 - [X] T004 Create `.gitignore` at project root to exclude common Python build/cache files (`__pycache__`, `.pytest_cache`, `*.pyc`, `todos.json`).
-- [X] T005 Initialize `todo_app/main.py` as the application entry point with a basic `if __name__ == "__main__":` block.
+- [X] T005 Initialize `todo_cli/main.py` as the application entry point with a basic `if __name__ == "__main__":` block.
 
 ---
 
@@ -36,8 +36,8 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [X] T006 [P] Implement `Task` class in `todo_app/models.py`, including `id`, `title`, `description`, `created_date`, `completed` attributes, and methods for serialization/deserialization to/from a dictionary.
-- [X] T007 [P] Implement initial `Storage` class in `todo_app/storage.py` with placeholder methods for `load_tasks()` (reads `todos.json`) and `save_tasks()` (writes to `todos.json`), handling empty/missing file gracefully.
+- [X] T006 [P] Implement `Task` class in `todo_cli/models.py`, including `id`, `title`, `description`, `created_date`, `completed` attributes, and methods for serialization/deserialization to/from a dictionary.
+- [X] T007 [P] Implement initial `Storage` class in `todo_cli/storage.py` with placeholder methods for `load_tasks()` (reads `todos.json`) and `save_tasks()` (writes to `todos.json`), handling empty/missing file gracefully.
 - [X] T008 Configure initial `pytest` setup (e.g., `pytest.ini` for basic settings, if needed).
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
@@ -60,9 +60,9 @@
 
 ### Implementation for User Story 1
 
-- [X] T012 [P] [US1] Implement `add_task` method in `todo_app/storage.py` to add a new `Task` object to the in-memory list and persist it to `todos.json`.
-- [X] T013 [US1] Implement a CLI function in `todo_app/cli.py` to prompt the user for a task title and optional description, then call `storage.add_task`.
-- [X] T014 [US1] Integrate the "Add Task" option into the main application menu loop in `todo_app/main.py`.
+- [X] T012 [P] [US1] Implement `add_task` method in `todo_cli/storage.py` to add a new `Task` object to the in-memory list and persist it to `todos.json`.
+- [X] T013 [US1] Implement a CLI function in `todo_cli/cli.py` to prompt the user for a task title and optional description, then call `storage.add_task`.
+- [X] T014 [US1] Integrate the "Add Task" option into the main application menu loop in `todo_cli/main.py`.
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -82,9 +82,9 @@
 
 ### Implementation for User Story 2
 
-- [X] T018 [P] [US2] Implement `get_all_tasks` method in `todo_app/storage.py` to retrieve all tasks from `todos.json`, load them, and return them sorted by `created_date`.
-- [X] T019 [US2] Implement a CLI function in `todo_app/cli.py` to display the formatted list of tasks (ID, title, completion status) obtained from `storage.get_all_tasks`.
-- [X] T020 [US2] Integrate the "View All Tasks" option into the main application menu loop in `todo_app/main.py`.
+- [X] T018 [P] [US2] Implement `get_all_tasks` method in `todo_cli/storage.py` to retrieve all tasks from `todos.json`, load them, and return them sorted by `created_date`.
+- [X] T019 [US2] Implement a CLI function in `todo_cli/cli.py` to display the formatted list of tasks (ID, title, completion status) obtained from `storage.get_all_tasks`.
+- [X] T020 [US2] Integrate the "View All Tasks" option into the main application menu loop in `todo_cli/main.py`.
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -103,9 +103,9 @@
 
 ### Implementation for User Story 3
 
-- [X] T023 [P] [US3] Implement `delete_task` method in `todo_app/storage.py` to remove a task by its ID from the in-memory list and `todos.json`.
-- [X] T024 [US3] Implement a CLI function for "Delete Task" in `todo_app/cli.py` to prompt the user for a task ID, ask for confirmation, and call `storage.delete_task`.
-- [X] T025 [US3] Integrate the "Delete Task" option into the main application menu loop in `todo_app/main.py`.
+- [X] T023 [P] [US3] Implement `delete_task` method in `todo_cli/storage.py` to remove a task by its ID from the in-memory list and `todos.json`.
+- [X] T024 [US3] Implement a CLI function for "Delete Task" in `todo_cli/cli.py` to prompt the user for a task ID, ask for confirmation, and call `storage.delete_task`.
+- [X] T025 [US3] Integrate the "Delete Task" option into the main application menu loop in `todo_cli/main.py`.
 
 **Checkpoint**: All user stories up to P1 should now be independently functional
 
@@ -124,9 +124,9 @@
 
 ### Implementation for User Story 4
 
-- [X] T028 [P] [US4] Implement `update_task` method in `todo_app/storage.py` to modify an existing task's title and/or description and persist changes.
-- [X] T029 [US4] Implement a CLI function for "Update Task" in `todo_app/cli.py` to prompt for task ID, new title, and new description, then call `storage.update_task`.
-- [X] T030 [US4] Integrate the "Update Task" option into the main application menu loop in `todo_app/main.py`.
+- [X] T028 [P] [US4] Implement `update_task` method in `todo_cli/storage.py` to modify an existing task's title and/or description and persist changes.
+- [X] T029 [US4] Implement a CLI function for "Update Task" in `todo_cli/cli.py` to prompt for task ID, new title, and new description, then call `storage.update_task`.
+- [X] T030 [US4] Integrate the "Update Task" option into the main application menu loop in `todo_cli/main.py`.
 
 **Checkpoint**: User Stories 1, 2, 3, and 4 should all work independently
 
@@ -146,9 +146,9 @@
 
 ### Implementation for User Story 5
 
-- [X] T034 [P] [US5] Implement `toggle_task_completion` method in `todo_app/storage.py` to change a task's `completed` status and persist changes.
-- [X] T035 [US5] Implement a CLI function for "Mark as Complete" in `todo_app/cli.py` to prompt for a task ID and call `storage.toggle_task_completion`.
-- [X] T036 [US5] Integrate the "Mark as Complete" option into the main application menu loop in `todo_app/main.py`.
+- [X] T034 [P] [US5] Implement `toggle_task_completion` method in `todo_cli/storage.py` to change a task's `completed` status and persist changes.
+- [X] T035 [US5] Implement a CLI function for "Mark as Complete" in `todo_cli/cli.py` to prompt for a task ID and call `storage.toggle_task_completion`.
+- [X] T036 [US5] Integrate the "Mark as Complete" option into the main application menu loop in `todo_cli/main.py`.
 
 **Checkpoint**: All user stories are now independently functional
 
@@ -158,11 +158,11 @@
 
 **Purpose**: Improvements that affect multiple user stories and overall quality.
 
-- [X] T037 [P] Review and refine all user-facing error handling messages and input validation across `todo_app/cli.py`.
-- [X] T038 Refactor common input validation logic into reusable utility functions within `todo_app/cli.py` or a new `todo_app/utils.py`.
+- [X] T037 [P] Review and refine all user-facing error handling messages and input validation across `todo_cli/cli.py`.
+- [X] T038 Refactor common input validation logic into reusable utility functions within `todo_cli/cli.py` or a new `todo_cli/utils.py`.
 - [X] T039 Review `specs/001-todo-list-manager/quickstart.md` and update it with final, accurate application usage details, including example inputs/outputs.
 - [X] T040 Final code cleanup, ensuring adherence to PEP 8 style guidelines, and adding necessary comments/docstrings for clarity.
-- [X] T041 Run all unit tests and generate a code coverage report, ensuring 90%+ coverage for `todo_app/` components.
+- [X] T041 Run all unit tests and generate a code coverage report, ensuring 90%+ coverage for `todo_cli/` components.
 
 ---
 
@@ -206,9 +206,9 @@
 - [ ] T011 [US1] Integration test for adding a task via CLI in `tests/unit/test_cli.py`
 
 # Example of parallel implementation tasks for User Story 1:
-- [ ] T012 [P] [US1] Implement `add_task` function in `todo_app/storage.py`
+- [ ] T012 [P] [US1] Implement `add_task` function in `todo_cli/storage.py`
 # ... while T013 is being worked on
-- [ ] T013 [US1] Implement CLI function for "Add Task" in `todo_app/cli.py`
+- [ ] T013 [US1] Implement CLI function for "Add Task" in `todo_cli/cli.py`
 ```
 
 ---
