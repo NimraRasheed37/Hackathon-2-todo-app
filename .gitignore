@@ -1,11 +1,10 @@
-# Python-specific
+# Python
 __pycache__/
 *.pyc
 .venv/
 venv/
 dist/
 *.egg-info/
-todos.json
 
 # Universal
 .DS_Store
