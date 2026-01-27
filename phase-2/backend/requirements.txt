@@ -1,0 +1,23 @@
+# Backend API Dependencies
+# Phase 2 - Module 1: Backend API & Database Layer
+
+# Web Framework
+fastapi>=0.109.0
+
+# ASGI Server
+uvicorn[standard]>=0.27.0
+
+# ORM and Database
+sqlmodel>=0.0.14
+psycopg2-binary>=2.9.9
+
+# Validation (included with FastAPI, but pinned for clarity)
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Environment variable loading
+python-dotenv>=1.0.0
+
+# Authentication (Module 2)
+PyJWT>=2.8.0
+bcrypt>=4.1.0

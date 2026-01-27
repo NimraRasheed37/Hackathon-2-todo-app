@@ -1,0 +1,454 @@
+openapi: 3.0.3
+info:
+  title: Todo API - Authentication Extension
+  description: |
+    Authentication and authorization extension for the Todo API.
+    This specification documents the security requirements added to the
+    existing task endpoints from Module 1.
+  version: 1.1.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.example.com
+    description: Production server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token issued by Better Auth on frontend.
+        Include in Authorization header: `Bearer <token>`
+
+  schemas:
+    TokenPayload:
+      type: object
+      description: JWT token payload structure
+      properties:
+        sub:
+          type: string
+          format: uuid
+          description: User ID (subject claim)
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        name:
+          type: string
+          description: User's display name
+          example: "John Doe"
+        iat:
+          type: integer
+          description: Issued at (Unix timestamp)
+          example: 1706140800
+        exp:
+          type: integer
+          description: Expiration (Unix timestamp)
+          example: 1706745600
+      required:
+        - sub
+        - email
+        - name
+        - iat
+        - exp
+
+    AuthError:
+      type: object
+      description: Authentication error response
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: "Token has expired"
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: "TOKEN_EXPIRED"
+      required:
+        - detail
+
+    ForbiddenError:
+      type: object
+      description: Authorization error response
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: "Access denied"
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: "ACCESS_DENIED"
+      required:
+        - detail
+
+  responses:
+    Unauthorized:
+      description: Authentication failed - missing, invalid, or expired token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthError'
+          examples:
+            missing_token:
+              summary: Missing Authorization header
+              value:
+                detail: "Not authenticated"
+                error_code: "NOT_AUTHENTICATED"
+            invalid_token:
+              summary: Invalid or malformed token
+              value:
+                detail: "Invalid token"
+                error_code: "INVALID_TOKEN"
+            expired_token:
+              summary: Token has expired
+              value:
+                detail: "Token has expired"
+                error_code: "TOKEN_EXPIRED"
+
+    Forbidden:
+      description: Authorization failed - user does not have access to resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+          examples:
+            access_denied:
+              summary: User attempting to access another user's data
+              value:
+                detail: "Access denied"
+                error_code: "ACCESS_DENIED"
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/{user_id}/tasks:
+    parameters:
+      - name: user_id
+        in: path
+        required: true
+        description: User ID (must match token subject claim)
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: List user's tasks
+      description: |
+        Returns all tasks for the authenticated user.
+        Requires valid JWT token with matching user_id.
+      operationId: listTasks
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by completion status
+          schema:
+            type: string
+            enum: [all, completed, pending]
+            default: all
+        - name: sort
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [created, title, updated]
+            default: created
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskRead'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      summary: Create a new task
+      description: |
+        Creates a new task for the authenticated user.
+        Requires valid JWT token with matching user_id.
+      operationId: createTask
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRead'
+        '400':
+          description: Invalid request body
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: Validation error
+
+  /api/{user_id}/tasks/{task_id}:
+    parameters:
+      - name: user_id
+        in: path
+        required: true
+        description: User ID (must match token subject claim)
+        schema:
+          type: string
+          format: uuid
+      - name: task_id
+        in: path
+        required: true
+        description: Task ID
+        schema:
+          type: integer
+
+    get:
+      summary: Get a single task
+      description: |
+        Returns a specific task by ID.
+        Requires valid JWT token and task must belong to user.
+      operationId: getTask
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRead'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Task not found
+
+    put:
+      summary: Update a task
+      description: |
+        Updates an existing task.
+        Requires valid JWT token and task must belong to user.
+      operationId: updateTask
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRead'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Task not found
+        '422':
+          description: Validation error
+
+    delete:
+      summary: Delete a task
+      description: |
+        Deletes a task permanently.
+        Requires valid JWT token and task must belong to user.
+      operationId: deleteTask
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Task deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Task not found
+
+  /api/{user_id}/tasks/{task_id}/complete:
+    parameters:
+      - name: user_id
+        in: path
+        required: true
+        description: User ID (must match token subject claim)
+        schema:
+          type: string
+          format: uuid
+      - name: task_id
+        in: path
+        required: true
+        description: Task ID
+        schema:
+          type: integer
+
+    patch:
+      summary: Toggle task completion
+      description: |
+        Toggles the completion status of a task.
+        Requires valid JWT token and task must belong to user.
+      operationId: toggleTaskComplete
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Task completion toggled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRead'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Task not found
+
+  /:
+    get:
+      summary: Health check
+      description: Returns API health status
+      operationId: healthCheck
+      tags:
+        - System
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  database:
+                    type: string
+                    example: "connected"
+
+# Referenced schemas from Module 1 (included for completeness)
+components:
+  schemas:
+    TaskCreate:
+      type: object
+      description: Request body for creating a task
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Task title
+          example: "Complete authentication module"
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Task description (optional)
+          example: "Implement JWT verification and user authorization"
+      required:
+        - title
+
+    TaskUpdate:
+      type: object
+      description: Request body for updating a task
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Task title
+          example: "Updated task title"
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Task description
+          example: "Updated description"
+        completed:
+          type: boolean
+          description: Task completion status
+          example: true
+
+    TaskRead:
+      type: object
+      description: Task response object
+      properties:
+        id:
+          type: integer
+          description: Task ID
+          example: 1
+        user_id:
+          type: string
+          format: uuid
+          description: Owner's user ID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        title:
+          type: string
+          description: Task title
+          example: "Complete authentication module"
+        description:
+          type: string
+          nullable: true
+          description: Task description
+          example: "Implement JWT verification"
+        completed:
+          type: boolean
+          description: Completion status
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2026-01-26T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2026-01-26T10:30:00Z"
+      required:
+        - id
+        - user_id
+        - title
+        - completed
+        - created_at
+        - updated_at

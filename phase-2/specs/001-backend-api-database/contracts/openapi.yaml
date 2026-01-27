@@ -1,0 +1,517 @@
+openapi: 3.0.3
+info:
+  title: Todo Backend API
+  description: |
+    RESTful API for task management with user-scoped data isolation.
+
+    **Module**: Backend API & Database Layer (Phase 2 - Module 1)
+
+    **Authentication**: Currently accepts user_id in URL path (JWT authentication added in Module 2)
+
+    **Base URL**: http://localhost:8000 (development) | https://api.yourdomain.com (production)
+
+    **Features**:
+    - Create, read, update, delete tasks
+    - Filter tasks by completion status
+    - Sort tasks by creation date or title
+    - Toggle task completion status
+    - Data isolation (users only see their own tasks)
+
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@yourdomain.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.yourdomain.com
+    description: Production server
+
+tags:
+  - name: tasks
+    description: Task management operations
+
+paths:
+  /api/{user_id}/tasks:
+    get:
+      tags:
+        - tasks
+      summary: List all tasks for a user
+      description: |
+        Retrieve all tasks belonging to the specified user with optional filtering and sorting.
+
+        **Filtering**: Use `status` query parameter to filter by completion status
+        **Sorting**: Use `sort` query parameter to control sort order
+      operationId: listTasks
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+            example: "user123"
+        - name: status
+          in: query
+          required: false
+          description: Filter by completion status
+          schema:
+            type: string
+            enum: [all, pending, completed]
+            default: all
+          example: "pending"
+        - name: sort
+          in: query
+          required: false
+          description: Sort order
+          schema:
+            type: string
+            enum: [created, title, updated]
+            default: created
+          example: "title"
+      responses:
+        '200':
+          description: Successfully retrieved task list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+              examples:
+                withTasks:
+                  summary: User with multiple tasks
+                  value:
+                    - id: 1
+                      user_id: "user123"
+                      title: "Buy groceries"
+                      description: "Milk, eggs, bread"
+                      completed: false
+                      created_at: "2026-01-25T10:30:00Z"
+                      updated_at: "2026-01-25T10:30:00Z"
+                    - id: 2
+                      user_id: "user123"
+                      title: "Write documentation"
+                      description: null
+                      completed: true
+                      created_at: "2026-01-25T09:00:00Z"
+                      updated_at: "2026-01-25T11:00:00Z"
+                noTasks:
+                  summary: User with no tasks
+                  value: []
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - tasks
+      summary: Create a new task
+      description: |
+        Create a new task for the specified user.
+
+        **Required**: title (1-200 characters)
+        **Optional**: description (max 1000 characters)
+      operationId: createTask
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+            example: "user123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+            examples:
+              withDescription:
+                summary: Task with description
+                value:
+                  title: "Buy groceries"
+                  description: "Milk, eggs, bread"
+              titleOnly:
+                summary: Task with title only
+                value:
+                  title: "Call dentist"
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              example:
+                id: 1
+                user_id: "user123"
+                title: "Buy groceries"
+                description: "Milk, eggs, bread"
+                completed: false
+                created_at: "2026-01-25T10:30:00Z"
+                updated_at: "2026-01-25T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/{user_id}/tasks/{id}:
+    get:
+      tags:
+        - tasks
+      summary: Get a single task
+      description: Retrieve a specific task by ID (with ownership validation)
+      operationId: getTask
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+            example: "user123"
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Successfully retrieved task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              example:
+                id: 1
+                user_id: "user123"
+                title: "Buy groceries"
+                description: "Milk, eggs, bread"
+                completed: false
+                created_at: "2026-01-25T10:30:00Z"
+                updated_at: "2026-01-25T10:30:00Z"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - tasks
+      summary: Update a task
+      description: |
+        Update task title and/or description (with ownership validation).
+
+        **Note**: Completion status is NOT updated via PUT; use PATCH /complete instead.
+      operationId: updateTask
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+            example: "user123"
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+            examples:
+              updateBoth:
+                summary: Update both title and description
+                value:
+                  title: "Buy groceries and fruits"
+                  description: "Milk, eggs, bread, apples, bananas"
+              updateTitleOnly:
+                summary: Update title only
+                value:
+                  title: "Buy groceries and fruits"
+              updateDescriptionOnly:
+                summary: Update description only
+                value:
+                  description: "Updated description"
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              example:
+                id: 1
+                user_id: "user123"
+                title: "Buy groceries and fruits"
+                description: "Milk, eggs, bread, apples, bananas"
+                completed: false
+                created_at: "2026-01-25T10:30:00Z"
+                updated_at: "2026-01-25T12:00:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - tasks
+      summary: Delete a task
+      description: Permanently delete a task (with ownership validation)
+      operationId: deleteTask
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+            example: "user123"
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '204':
+          description: Task deleted successfully (no content returned)
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/{user_id}/tasks/{id}/complete:
+    patch:
+      tags:
+        - tasks
+      summary: Toggle task completion status
+      description: |
+        Toggle task between pending (false) and completed (true).
+
+        **Behavior**: If completed=false, set to true. If completed=true, set to false.
+      operationId: toggleTaskCompletion
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+            example: "user123"
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Completion status toggled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              examples:
+                nowCompleted:
+                  summary: Task marked as completed
+                  value:
+                    id: 1
+                    user_id: "user123"
+                    title: "Buy groceries"
+                    description: "Milk, eggs, bread"
+                    completed: true
+                    created_at: "2026-01-25T10:30:00Z"
+                    updated_at: "2026-01-25T14:00:00Z"
+                nowPending:
+                  summary: Task marked as pending
+                  value:
+                    id: 1
+                    user_id: "user123"
+                    title: "Buy groceries"
+                    description: "Milk, eggs, bread"
+                    completed: false
+                    created_at: "2026-01-25T10:30:00Z"
+                    updated_at: "2026-01-25T15:00:00Z"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    Task:
+      type: object
+      description: Complete task object (returned by API)
+      required:
+        - id
+        - user_id
+        - title
+        - completed
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        user_id:
+          type: string
+          description: Owner of this task
+          example: "user123"
+        title:
+          type: string
+          description: Task title (1-200 characters)
+          minLength: 1
+          maxLength: 200
+          example: "Buy groceries"
+        description:
+          type: string
+          nullable: true
+          description: Optional task description (max 1000 characters)
+          maxLength: 1000
+          example: "Milk, eggs, bread"
+        completed:
+          type: boolean
+          description: Whether task is marked as done
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: When task was created (ISO 8601 format, UTC)
+          example: "2026-01-25T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: When task was last modified (ISO 8601 format, UTC)
+          example: "2026-01-25T10:30:00Z"
+
+    TaskCreate:
+      type: object
+      description: Request body for creating a new task
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: Task title (1-200 characters)
+          minLength: 1
+          maxLength: 200
+          example: "Buy groceries"
+        description:
+          type: string
+          nullable: true
+          description: Optional task description (max 1000 characters)
+          maxLength: 1000
+          example: "Milk, eggs, bread"
+
+    TaskUpdate:
+      type: object
+      description: Request body for updating a task (all fields optional)
+      properties:
+        title:
+          type: string
+          description: Updated task title (1-200 characters)
+          minLength: 1
+          maxLength: 200
+          example: "Buy groceries and fruits"
+        description:
+          type: string
+          nullable: true
+          description: Updated task description (max 1000 characters)
+          maxLength: 1000
+          example: "Milk, eggs, bread, apples, bananas"
+
+    Error:
+      type: object
+      description: Standard error response
+      required:
+        - detail
+        - error_code
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message
+          example: "Task not found"
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: "NOT_FOUND"
+        field:
+          type: string
+          description: Field name for validation errors (optional)
+          example: "title"
+
+  responses:
+    BadRequest:
+      description: Invalid request (validation error)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            titleTooLong:
+              summary: Title exceeds maximum length
+              value:
+                detail: "Title must be at most 200 characters"
+                error_code: "VALIDATION_ERROR"
+                field: "title"
+            titleMissing:
+              summary: Title is required
+              value:
+                detail: "Title is required"
+                error_code: "VALIDATION_ERROR"
+                field: "title"
+
+    NotFound:
+      description: Resource not found or not owned by user
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Task not found"
+            error_code: "NOT_FOUND"
+
+    UnprocessableEntity:
+      description: Invalid JSON format
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Invalid JSON format"
+            error_code: "INVALID_JSON"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "An unexpected error occurred. Please try again later."
+            error_code: "INTERNAL_ERROR"
