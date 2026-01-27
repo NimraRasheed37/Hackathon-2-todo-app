@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json -RequireTasks -IncludeTasks)",
+      "Bash(npx tsc:*)",
+      "Bash(D:/GIAIC/Q4\\\\ -\\\\ online\\\\ Agents/Hackathons/Hackathon2/Hackathon-2-todo-app/phase-2/backend/venv/Scripts/python.exe:*)",
+      "Bash(D:/GIAIC/Q4\\\\ -\\\\ online\\\\ Agents/Hackathons/Hackathon2/Hackathon-2-todo-app/phase-2/backend/venv/Scripts/python.exe -m uvicorn:*)"
+    ]
+  }
+}
