@@ -66,8 +66,7 @@ export function RegisterForm() {
       }
 
       toast.success("Account created successfully!");
-      // Use full page navigation to ensure session cookies are read fresh
-      window.location.href = "/dashboard";
+      router.push("/dashboard");
     } catch {
       toast.error("An error occurred. Please try again.");
     } finally {

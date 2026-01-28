@@ -54,8 +54,7 @@ export function LoginForm() {
       }
 
       toast.success("Welcome back!");
-      // Use full page navigation to ensure session cookies are read fresh
-      window.location.href = "/dashboard";
+      router.push("/dashboard");
     } catch {
       toast.error("An error occurred. Please try again.");
     } finally {
