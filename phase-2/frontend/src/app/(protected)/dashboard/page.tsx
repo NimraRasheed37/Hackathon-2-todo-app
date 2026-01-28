@@ -1,171 +1,169 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { signIn, auth } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
+import { useTasks } from "@/lib/hooks/useTasks";
+import { TaskList } from "@/components/tasks/TaskList";
+import { TaskFilters } from "@/components/tasks/TaskFilters";
+import { AddTaskModal } from "@/components/tasks/AddTaskModal";
+import { EditTaskModal } from "@/components/tasks/EditTaskModal";
+import { DeleteConfirmDialog } from "@/components/tasks/DeleteConfirmDialog";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { toast } from "sonner";
-import { Mail, Lock, CheckSquare } from "lucide-react";
+import { Plus, ListTodo, CheckCircle2, Clock } from "lucide-react";
+import { Task, FilterStatus, SortOption } from "@/types";
 
-export function LoginForm() {
-  const router = useRouter();
+export default function DashboardPage() {
+  const { data: session } = useSession();
+  const userId = session?.user?.id || "";
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {}
-  );
+  // UI State
+  const [filter, setFilter] = useState<FilterStatus>("all");
+  const [sort, setSort] = useState<SortOption>("created");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
 
-  // Validation function
-  const validate = () => {
-    const newErrors: { email?: string; password?: string } = {};
+  // Data
+  const {
+    tasks,
+    isLoading,
+    error,
+    createTask,
+    updateTask,
+    toggleComplete,
+    deleteTask,
+    taskCounts,
+  } = useTasks({ userId, filter, sort });
 
-    if (!email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Please enter a valid email";
-    }
+  const deletingTask = deletingTaskId
+    ? tasks.find((t) => t.id === deletingTaskId) || null
+    : null;
 
-    if (!password) {
-      newErrors.password = "Password is required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handleCreateTask = async (data: {
+    title: string;
+    description?: string;
+  }) => {
+    await createTask(data);
+    setIsCreateModalOpen(false);
   };
 
-  // Wait for session to exist
-  const waitForSession = async () => {
-    let attempts = 0;
-    while (attempts < 10) {
-      const session = await auth.api.getSession();
-      if (session) return true;
-      await new Promise((res) => setTimeout(res, 200)); // wait 200ms
-      attempts++;
-    }
-    return false;
+  const handleUpdateTask = async (data: {
+    title?: string;
+    description?: string;
+  }) => {
+    if (!editingTask) return;
+    await updateTask(editingTask.id, data);
+    setEditingTask(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    setIsLoading(true);
-    try {
-      const result = await signIn.email({
-        email: email.trim().toLowerCase(),
-        password,
-      });
-
-      if (!result || result.error) {
-        toast.error(result?.error?.message || "Invalid credentials");
-        return;
-      }
-
-      toast.success("Welcome back!");
-
-      // Wait for session to be available before redirecting
-      await waitForSession();
-
-      // Redirect to dashboard
-      router.replace("/dashboard");
-    } catch (err) {
-      console.error(err);
-      toast.error("An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleDeleteTask = async () => {
+    if (!deletingTaskId) return;
+    await deleteTask(deletingTaskId);
+    setDeletingTaskId(null);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="space-y-6">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <CheckSquare className="w-5 h-5" />
-          </div>
-          <span className="text-xl font-bold text-foreground">
-            Mark<span className="text-primary">It</span>
-          </span>
-        </Link>
-        <ThemeToggle size="sm" />
-      </header>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
+          <p className="text-foreground-secondary mt-1">
+            Manage and track your daily tasks
+          </p>
+        </div>
+        <Button onClick={() => setIsCreateModalOpen(true)} size="lg">
+          <Plus className="w-5 h-5" />
+          <span>Add Task</span>
+        </Button>
+      </div>
 
-      {/* Main content */}
-      <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          <div className="bg-card rounded-2xl shadow-theme-lg border border-border p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="text-center mb-6">
-                <h1 className="text-2xl font-bold text-foreground">
-                  Welcome back
-                </h1>
-                <p className="text-foreground-secondary mt-1">
-                  Sign in to your account
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted">
-                    <Mail className="w-5 h-5" />
-                  </div>
-                  <Input
-                    type="email"
-                    placeholder="Email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    error={errors.email}
-                    className="pl-10"
-                    autoComplete="email"
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted">
-                    <Lock className="w-5 h-5" />
-                  </div>
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    error={errors.password}
-                    className="pl-10"
-                    autoComplete="current-password"
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                isLoading={isLoading}
-                className="w-full"
-                size="lg"
-              >
-                Sign in
-              </Button>
-
-              <p className="text-center text-sm text-foreground-secondary">
-                Don&apos;t have an account?{" "}
-                <Link
-                  href="/register"
-                  className="font-medium text-primary hover:text-primary-hover transition-colors"
-                >
-                  Sign up
-                </Link>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary-light flex items-center justify-center">
+              <ListTodo className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm text-foreground-muted">Total</p>
+              <p className="text-2xl font-bold text-foreground">
+                {taskCounts.all}
               </p>
-            </form>
+            </div>
           </div>
         </div>
-      </main>
+
+        <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-warning-light flex items-center justify-center">
+              <Clock className="w-5 h-5 text-warning" />
+            </div>
+            <div>
+              <p className="text-sm text-foreground-muted">Pending</p>
+              <p className="text-2xl font-bold text-foreground">
+                {taskCounts.pending}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-success-light flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-success" />
+            </div>
+            <div>
+              <p className="text-sm text-foreground-muted">Completed</p>
+              <p className="text-2xl font-bold text-foreground">
+                {taskCounts.completed}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <TaskFilters
+        currentFilter={filter}
+        currentSort={sort}
+        taskCounts={taskCounts}
+        onFilterChange={setFilter}
+        onSortChange={setSort}
+      />
+
+      {/* Task List */}
+      <TaskList
+        tasks={tasks}
+        isLoading={isLoading}
+        error={error}
+        filter={filter}
+        onToggleComplete={toggleComplete}
+        onEdit={setEditingTask}
+        onDelete={setDeletingTaskId}
+        onCreateTask={() => setIsCreateModalOpen(true)}
+      />
+
+      {/* Modals */}
+      <AddTaskModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={handleCreateTask}
+      />
+
+      <EditTaskModal
+        isOpen={!!editingTask}
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
+        onSubmit={handleUpdateTask}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={!!deletingTaskId}
+        taskTitle={deletingTask?.title || ""}
+        onConfirm={handleDeleteTask}
+        onCancel={() => setDeletingTaskId(null)}
+      />
     </div>
   );
 }
