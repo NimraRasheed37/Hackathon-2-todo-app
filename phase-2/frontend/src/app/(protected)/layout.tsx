@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signOut, getToken } from "@/lib/auth-client";
-import { useEffect, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { CheckSquare, LogOut, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -14,27 +14,50 @@ export default function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, isPending } = useSession();
+  const { data: session, isPending, error } = useSession();
+  const hasRedirected = useRef(false);
+  const tokenFetched = useRef(false);
 
+  // Fetch JWT token for API authentication
   const fetchAndSetToken = useCallback(async () => {
+    if (tokenFetched.current) return;
+
     try {
-      const result = await getToken();
-      if (result && "data" in result && result.data?.token) {
-        api.setToken(result.data.token);
+      const token = await getToken();
+      if (token) {
+        api.setToken(token);
+        tokenFetched.current = true;
+        console.log("API token set successfully");
+      } else {
+        console.log("No token received");
       }
     } catch (error) {
-      console.error("Failed to get JWT token:", error);
+      console.error("Failed to get token:", error);
     }
   }, []);
 
+  // Debug logging - check browser console
   useEffect(() => {
-    if (!isPending && !session?.user) {
+    console.log("=== Session Debug ===");
+    console.log("isPending:", isPending);
+    console.log("session:", session);
+    console.log("session?.user:", session?.user);
+    console.log("error:", error);
+    console.log("====================");
+  }, [session, isPending, error]);
+
+  useEffect(() => {
+    // Only redirect once, and only if we're certain there's no session
+    if (!isPending && !session?.user && !hasRedirected.current) {
+      console.log("Redirecting to login - no session found");
+      hasRedirected.current = true;
       window.location.href = "/login";
     }
   }, [session, isPending]);
 
+  // Fetch API token when session is available
   useEffect(() => {
-    if (session?.user) {
+    if (session?.user && !tokenFetched.current) {
       fetchAndSetToken();
     }
   }, [session?.user, fetchAndSetToken]);
@@ -43,6 +66,7 @@ export default function ProtectedLayout({
     try {
       await signOut();
       api.setToken(null);
+      tokenFetched.current = false;
       toast.success("Logged out successfully");
       window.location.href = "/login";
     } catch {

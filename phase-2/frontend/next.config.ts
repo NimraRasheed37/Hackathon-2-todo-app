@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  reactCompiler: true,
+  // Temporarily disable React Compiler to test auth flow
+  // reactCompiler: true,
+  serverExternalPackages: ["pg"],
 };
 
 export default nextConfig;

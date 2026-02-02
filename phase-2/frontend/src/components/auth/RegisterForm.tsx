@@ -62,14 +62,15 @@ export function RegisterForm() {
 
       if (result.error) {
         toast.error(result.error.message || "Registration failed");
+        setIsLoading(false);
         return;
       }
 
       toast.success("Account created successfully!");
+      // Use router.push for client-side navigation to preserve auth state
       router.push("/dashboard");
     } catch {
       toast.error("An error occurred. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };
