@@ -1,5 +1,4 @@
 import { betterAuth } from "better-auth";
-import { jwt } from "better-auth/plugins";
 import { Pool } from "pg";
 
 // Create pool with SSL support for Neon
@@ -10,9 +9,12 @@ const pool = new Pool({
   },
 });
 
+const isProduction = process.env.NODE_ENV === "production";
+const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL,
   database: pool,
   emailAndPassword: {
     enabled: true,
@@ -25,19 +27,13 @@ export const auth = betterAuth({
       maxAge: 60 * 5, // 5 minutes
     },
   },
+  advanced: {
+    cookiePrefix: "markit",
+    useSecureCookies: isProduction,
+  },
   trustedOrigins: [
-    process.env.BETTER_AUTH_URL || "http://localhost:3000",
-  ],
-  plugins: [
-    jwt({
-      jwt: {
-        expirationTime: "7d",
-        definePayload: async ({ user }: { user: { id: string; email: string; name: string } }) => ({
-          sub: user.id,
-          email: user.email,
-          name: user.name,
-        }),
-      },
-    }),
+    baseURL,
+    "http://localhost:3000",
+    "https://hackathon-2-todo-app-ten.vercel.app",
   ],
 });
