@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Neon__describe_table_schema",
+      "mcp__Neon__run_sql",
+      "Bash(node -e:*)"
+    ]
+  }
+}

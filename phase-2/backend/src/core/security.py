@@ -1,6 +1,5 @@
 """JWT verification and security utilities."""
 
-import uuid
 from datetime import datetime, timezone
 from typing import Any
 
@@ -37,11 +36,10 @@ def verify_token(token: str) -> TokenPayload:
             options={"require": ["sub", "exp", "iat"]},
         )
 
-        # Parse UUID from sub claim
-        try:
-            user_id = uuid.UUID(payload["sub"])
-        except (ValueError, TypeError) as e:
-            raise AuthenticationError("Invalid user ID in token") from e
+        # User ID is now a string (from Better Auth)
+        user_id = payload["sub"]
+        if not user_id or not isinstance(user_id, str):
+            raise AuthenticationError("Invalid user ID in token")
 
         return TokenPayload(
             sub=user_id,
@@ -83,7 +81,7 @@ def extract_user_info(token_payload: TokenPayload) -> UserInfo:
     )
 
 
-def validate_user_authorization(token_user_id: uuid.UUID, path_user_id: str) -> None:
+def validate_user_authorization(token_user_id: str, path_user_id: str) -> None:
     """
     Validate that the token user ID matches the URL path user ID.
 
@@ -94,15 +92,10 @@ def validate_user_authorization(token_user_id: uuid.UUID, path_user_id: str) -> 
     Raises:
         AuthorizationError: If user IDs don't match
     """
-    try:
-        path_uuid = uuid.UUID(path_user_id)
-    except (ValueError, TypeError) as e:
-        raise AuthorizationError("Invalid user ID format in path") from e
-
-    if token_user_id != path_uuid:
+    if token_user_id != path_user_id:
         log_security_event(
             "authorization_failed",
-            user_id=str(token_user_id),
+            user_id=token_user_id,
             details={
                 "reason": "User ID mismatch",
                 "requested_user_id": path_user_id,
