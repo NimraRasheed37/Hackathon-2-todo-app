@@ -1,6 +1,5 @@
 """Pydantic schemas for task API requests and responses."""
 
-import uuid
 from datetime import datetime
 from typing import Optional
 
@@ -52,7 +51,7 @@ class TaskRead(BaseModel):
     """Response schema for task data."""
 
     id: int
-    user_id: uuid.UUID
+    user_id: str
     title: str
     description: Optional[str]
     completed: bool
