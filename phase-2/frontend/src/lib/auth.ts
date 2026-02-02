@@ -9,9 +9,12 @@ const pool = new Pool({
   },
 });
 
+const isProduction = process.env.NODE_ENV === "production";
+const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL,
   database: pool,
   emailAndPassword: {
     enabled: true,
@@ -19,9 +22,18 @@ export const auth = betterAuth({
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5, // 5 minutes
+    },
+  },
+  advanced: {
+    cookiePrefix: "markit",
+    useSecureCookies: isProduction,
   },
   trustedOrigins: [
-    process.env.BETTER_AUTH_URL || "http://localhost:3000",
+    baseURL,
     "http://localhost:3000",
+    "https://hackathon-2-todo-app-ten.vercel.app",
   ],
 });
