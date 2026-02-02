@@ -30,12 +30,9 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-# Expose port
+# Expose port (Railway will set PORT env var)
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/')" || exit 1
-
-# Run the application
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the application using shell form to allow $PORT substitution
+# Railway sets PORT env var; fallback to 8000 for local development
+CMD uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000}
