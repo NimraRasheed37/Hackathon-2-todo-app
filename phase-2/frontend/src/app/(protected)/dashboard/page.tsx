@@ -1,8 +1,9 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "@/lib/auth-client";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useTasks } from "@/lib/hooks/useTasks";
 import { TaskList } from "@/components/tasks/TaskList";
 import { TaskFilters } from "@/components/tasks/TaskFilters";
@@ -16,10 +17,33 @@ import { Task, FilterStatus, SortOption } from "@/types";
 export default function DashboardPage() {
   const { data: session } = useSession();
   const userId = session?.user?.id || "";
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Get filter from URL query parameter
+  const urlFilter = searchParams.get("filter") as FilterStatus | null;
 
   // UI State
-  const [filter, setFilter] = useState<FilterStatus>("all");
+  const [filter, setFilter] = useState<FilterStatus>(urlFilter || "all");
   const [sort, setSort] = useState<SortOption>("created");
+
+  // Sync filter with URL
+  useEffect(() => {
+    if (urlFilter && urlFilter !== filter) {
+      setFilter(urlFilter);
+    }
+  }, [urlFilter]);
+
+  // Update URL when filter changes (optional - for sharing/bookmarking)
+  const handleFilterChange = (newFilter: FilterStatus) => {
+    setFilter(newFilter);
+    // Only update URL if filter is not "all"
+    if (newFilter === "all") {
+      router.push("/dashboard", { scroll: false });
+    } else {
+      router.push(`/dashboard?filter=${newFilter}`, { scroll: false });
+    }
+  };
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
@@ -129,7 +153,7 @@ export default function DashboardPage() {
         currentFilter={filter}
         currentSort={sort}
         taskCounts={taskCounts}
-        onFilterChange={setFilter}
+        onFilterChange={handleFilterChange}
         onSortChange={setSort}
       />
 

@@ -274,3 +274,75 @@ body {
 [data-theme="dark"] .gradient-hero {
   background: linear-gradient(180deg, var(--background) 0%, var(--background-secondary) 50%, var(--background) 100%);
 }
+
+/* Chat Popup Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.2s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.15s ease-out;
+}
+
+/* Sidebar transitions */
+.sidebar-transition {
+  transition: width 0.3s ease, transform 0.3s ease;
+}
+
+/* Mobile menu overlay */
+.mobile-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Chat message animations */
+@keyframes messageSlide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-animate {
+  animation: messageSlide 0.2s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .sidebar-offset {
+    padding-left: 0 !important;
+  }
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
