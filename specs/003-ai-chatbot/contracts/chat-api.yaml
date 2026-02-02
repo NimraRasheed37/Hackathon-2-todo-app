@@ -1,0 +1,308 @@
+openapi: 3.0.3
+info:
+  title: AI Chat API
+  description: API endpoints for AI-powered todo chatbot
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+
+paths:
+  /api/chat:
+    post:
+      summary: Send a message to the AI assistant
+      description: |
+        Process a user message through the AI assistant. The assistant can:
+        - Create, list, complete, delete, or update tasks
+        - Maintain conversation context
+        - Provide helpful responses
+      operationId: sendChatMessage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            examples:
+              createTask:
+                summary: Create a task
+                value:
+                  message: "Add buy milk to my tasks"
+                  conversation_id: null
+              listTasks:
+                summary: List tasks
+                value:
+                  message: "What are my tasks?"
+                  conversation_id: 1
+              completeTask:
+                summary: Complete a task
+                value:
+                  message: "Mark buy milk as done"
+                  conversation_id: 1
+      responses:
+        '200':
+          description: Successful response from AI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              examples:
+                taskCreated:
+                  summary: Task created response
+                  value:
+                    message: "✓ Created task: buy milk"
+                    conversation_id: 1
+                    tool_calls:
+                      - name: add_task
+                        arguments: {"title": "buy milk"}
+                        result: {"success": true, "data": {"task_id": 42, "title": "buy milk"}}
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Message cannot be empty"
+                error_code: "VALIDATION_ERROR"
+        '401':
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Invalid authentication token"
+                error_code: "INVALID_TOKEN"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "An unexpected error occurred"
+                error_code: "INTERNAL_ERROR"
+
+  /api/conversations:
+    get:
+      summary: List user's conversations
+      description: Get a list of the user's recent conversations
+      operationId: listConversations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of conversations to return
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConversationSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/conversations/{conversation_id}:
+    get:
+      summary: Get conversation with messages
+      description: Load a specific conversation with its message history
+      operationId: getConversation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: message_limit
+          in: query
+          description: Maximum number of messages to return
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationDetail'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a conversation
+      description: Permanently delete a conversation and all its messages
+      operationId: deleteConversation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Conversation deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from Better Auth
+
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: User's message to the AI assistant
+        conversation_id:
+          type: integer
+          nullable: true
+          description: ID of existing conversation, or null for new conversation
+
+    ChatResponse:
+      type: object
+      required:
+        - message
+        - conversation_id
+      properties:
+        message:
+          type: string
+          description: AI assistant's response
+        conversation_id:
+          type: integer
+          description: ID of the conversation
+        tool_calls:
+          type: array
+          nullable: true
+          description: Tools that were called during this interaction
+          items:
+            $ref: '#/components/schemas/ToolCallResult'
+
+    ToolCallResult:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the tool called
+        arguments:
+          type: object
+          description: Arguments passed to the tool
+        result:
+          type: object
+          description: Result returned by the tool
+
+    ConversationSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+        message_count:
+          type: integer
+          description: Number of messages in conversation
+
+    ConversationDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        role:
+          type: string
+          enum: [user, assistant, tool]
+        content:
+          type: string
+        tool_calls:
+          type: object
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message
+        error_code:
+          type: string
+          description: Machine-readable error code
+        field:
+          type: string
+          nullable: true
+          description: Field that caused the error (for validation errors)

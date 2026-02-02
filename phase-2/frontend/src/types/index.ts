@@ -188,3 +188,69 @@ export interface AuthState {
   user: User | null;
   error: string | null;
 }
+
+// Chat Types (Phase 3)
+
+/**
+ * Chat message entity
+ */
+export interface ChatMessage {
+  id: number;
+  role: "user" | "assistant" | "tool";
+  content: string;
+  tool_calls?: {
+    calls?: Array<{
+      name: string;
+      arguments: Record<string, unknown>;
+      result: Record<string, unknown>;
+    }>;
+  };
+  created_at: string;
+}
+
+/**
+ * Conversation summary for list display
+ */
+export interface ConversationSummary {
+  id: number;
+  title: string;
+  updated_at: string;
+  message_count: number;
+}
+
+/**
+ * Full conversation with messages
+ */
+export interface Conversation {
+  id: number;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  messages: ChatMessage[];
+}
+
+/**
+ * Tool call result from AI
+ */
+export interface ToolCallResult {
+  name: string;
+  arguments: Record<string, unknown>;
+  result: Record<string, unknown>;
+}
+
+/**
+ * Chat API request
+ */
+export interface ChatRequest {
+  message: string;
+  conversation_id?: number | null;
+}
+
+/**
+ * Chat API response
+ */
+export interface ChatResponse {
+  message: string;
+  conversation_id: number;
+  tool_calls?: ToolCallResult[] | null;
+}

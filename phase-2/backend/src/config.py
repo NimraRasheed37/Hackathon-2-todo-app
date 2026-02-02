@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expiration_days: int = 7
 
+    # OpenAI Integration (Phase 3)
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o-mini"
+    max_conversation_messages: int = 50
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

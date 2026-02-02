@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
-from src.api.routes import tasks
+from src.api.routes import chat, tasks
 from src.config import get_settings
 from src.core.exceptions import (
     AuthenticationError,
@@ -224,3 +224,4 @@ async def health_check():
 
 # Include routers
 app.include_router(tasks.router, prefix="/api", tags=["tasks"])
+app.include_router(chat.router, prefix="/api", tags=["chat"])

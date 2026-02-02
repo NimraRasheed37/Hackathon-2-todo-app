@@ -8,6 +8,10 @@ import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { chatApi } from "@/lib/chat-api";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { ChatPopup } from "@/components/chat/ChatPopup";
+import { cn } from "@/lib/utils";
 
 export default function ProtectedLayout({
   children,
@@ -26,6 +30,7 @@ export default function ProtectedLayout({
       const token = await getToken();
       if (token) {
         api.setToken(token);
+        chatApi.setToken(token);
         tokenFetched.current = true;
         console.log("API token set successfully");
       } else {
@@ -66,6 +71,7 @@ export default function ProtectedLayout({
     try {
       await signOut();
       api.setToken(null);
+      chatApi.setToken(null);
       tokenFetched.current = false;
       toast.success("Logged out successfully");
       window.location.href = "/login";
@@ -92,8 +98,8 @@ export default function ProtectedLayout({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-40 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="bg-card border-b border-border sticky top-0 z-50 shadow-sm">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/dashboard" className="flex items-center gap-2 group">
@@ -106,12 +112,12 @@ export default function ProtectedLayout({
             </Link>
 
             {/* User section */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <ThemeToggle size="sm" />
 
-              <div className="flex items-center gap-2 text-foreground-secondary px-3 py-1.5 rounded-lg bg-secondary">
+              <div className="flex items-center gap-2 text-foreground-secondary px-2 sm:px-3 py-1.5 rounded-lg bg-secondary">
                 <User className="w-4 h-4" />
-                <span className="hidden sm:inline font-medium text-sm">
+                <span className="hidden sm:inline font-medium text-sm max-w-[120px] truncate">
                   {session.user.name}
                 </span>
               </div>
@@ -130,10 +136,24 @@ export default function ProtectedLayout({
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Main content - with sidebar offset */}
+      <main
+        className={cn(
+          "transition-all duration-300 pt-6 pb-24",
+          // Desktop: offset for sidebar (w-56 = 224px)
+          "lg:pl-60",
+          // Mobile: full width with padding
+          "px-4 sm:px-6 lg:pr-6"
+        )}
+      >
+        <div className="max-w-5xl">{children}</div>
       </main>
+
+      {/* Floating Chat Button & Popup */}
+      <ChatPopup />
     </div>
   );
 }

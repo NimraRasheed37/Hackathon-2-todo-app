@@ -10,6 +10,9 @@ from src.config import get_settings
 # User must be imported BEFORE Task due to FK dependency
 from src.models.user import User  # noqa: F401
 from src.models.task import Task  # noqa: F401
+# Phase 3: Conversation and Message models
+from src.models.conversation import Conversation  # noqa: F401
+from src.models.message import Message  # noqa: F401
 
 settings = get_settings()
 

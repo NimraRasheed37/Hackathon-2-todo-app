@@ -44,3 +44,21 @@ class AuthorizationError(Exception):
         self.message = message
         self.error_code = error_code
         super().__init__(message)
+
+
+class ChatError(Exception):
+    """Raised when a chat operation fails (AI service unavailable, etc.)."""
+
+    def __init__(self, message: str, error_code: str | None = None):
+        self.message = message
+        self.error_code = error_code
+        super().__init__(message)
+
+
+class ConversationNotFoundError(Exception):
+    """Raised when a conversation is not found or doesn't belong to the user."""
+
+    def __init__(self, conversation_id: int, user_id: str):
+        self.conversation_id = conversation_id
+        self.user_id = user_id
+        super().__init__(f"Conversation {conversation_id} not found for user {user_id}")

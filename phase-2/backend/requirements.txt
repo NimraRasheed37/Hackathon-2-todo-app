@@ -21,3 +21,6 @@ python-dotenv>=1.0.0
 # Authentication (Module 2)
 PyJWT>=2.8.0
 bcrypt>=4.1.0
+
+# AI Integration (Phase 3)
+openai>=1.0.0
