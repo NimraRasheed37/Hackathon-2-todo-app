@@ -2,54 +2,55 @@
 
 /* ============================================
    MarkIt Theme System
-   Based on the dashboard design reference
+   Indigo & Sky Blue Theme
    ============================================ */
 
 /* Light Mode (Default) */
 :root {
   /* Background colors */
-  --background: #f8fafc;
-  --background-secondary: #ffffff;
-  --background-tertiary: #f1f5f9;
+  --background: #F8FAFC;
+  --background-secondary: #FFFFFF;
+  --background-tertiary: #F1F5F9;
 
   /* Foreground/Text colors */
-  --foreground: #0f172a;
-  --foreground-secondary: #475569;
-  --foreground-muted: #94a3b8;
+  --foreground: #0F172A;
+  --foreground-secondary: #334155;
+  --foreground-muted: #64748B;
 
-  /* Primary - Forest Green from dashboard */
-  --primary: #166534;
-  --primary-hover: #15803d;
-  --primary-light: #dcfce7;
-  --primary-foreground: #ffffff;
+  /* Primary - Indigo */
+  --primary: #6366F1;
+  --primary-hover: #4F46E5;
+  --primary-light: #E0E7FF;
+  --primary-foreground: #FFFFFF;
 
   /* Secondary */
-  --secondary: #e2e8f0;
-  --secondary-hover: #cbd5e1;
-  --secondary-foreground: #1e293b;
+  --secondary: #F1F5F9;
+  --secondary-hover: #E2E8F0;
+  --secondary-foreground: #0F172A;
 
-  /* Accent colors */
-  --accent: #f97316;
-  --accent-light: #ffedd5;
+  /* Accent colors - Sky Blue */
+  --accent: #38BDF8;
+  --accent-hover: #0EA5E9;
+  --accent-light: #E0F2FE;
 
   /* Card/Surface */
-  --card: #ffffff;
-  --card-hover: #f8fafc;
-  --card-border: #e2e8f0;
+  --card: #FFFFFF;
+  --card-hover: #F8FAFC;
+  --card-border: #E2E8F0;
 
   /* Borders */
-  --border: #e2e8f0;
-  --border-hover: #cbd5e1;
+  --border: #E2E8F0;
+  --border-hover: #CBD5E1;
 
   /* Status colors */
-  --success: #22c55e;
-  --success-light: #dcfce7;
-  --warning: #f59e0b;
-  --warning-light: #fef3c7;
-  --error: #ef4444;
-  --error-light: #fee2e2;
-  --info: #3b82f6;
-  --info-light: #dbeafe;
+  --success: #22C55E;
+  --success-light: #DCFCE7;
+  --warning: #F59E0B;
+  --warning-light: #FEF3C7;
+  --error: #EF4444;
+  --error-light: #FEE2E2;
+  --info: #38BDF8;
+  --info-light: #E0F2FE;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -57,6 +58,7 @@
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-primary: 0 4px 14px -2px rgb(99 102 241 / 0.25);
 
   /* Radius */
   --radius-sm: 0.375rem;
@@ -64,6 +66,7 @@
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
   --radius-full: 9999px;
 
   /* Transitions */
@@ -75,32 +78,33 @@
 /* Dark Mode */
 [data-theme="dark"] {
   /* Background colors */
-  --background: #0f172a;
-  --background-secondary: #1e293b;
+  --background: #0F172A;
+  --background-secondary: #1E293B;
   --background-tertiary: #334155;
 
   /* Foreground/Text colors */
-  --foreground: #f1f5f9;
-  --foreground-secondary: #cbd5e1;
-  --foreground-muted: #64748b;
+  --foreground: #F8FAFC;
+  --foreground-secondary: #CBD5E1;
+  --foreground-muted: #64748B;
 
-  /* Primary - Brighter green for dark mode */
-  --primary: #22c55e;
-  --primary-hover: #16a34a;
-  --primary-light: #166534;
-  --primary-foreground: #ffffff;
+  /* Primary - Indigo (brighter for dark mode) */
+  --primary: #818CF8;
+  --primary-hover: #6366F1;
+  --primary-light: #312E81;
+  --primary-foreground: #0F172A;
 
   /* Secondary */
   --secondary: #334155;
   --secondary-hover: #475569;
-  --secondary-foreground: #f1f5f9;
+  --secondary-foreground: #F8FAFC;
 
-  /* Accent colors */
-  --accent: #fb923c;
-  --accent-light: #7c2d12;
+  /* Accent colors - Sky Blue */
+  --accent: #38BDF8;
+  --accent-hover: #7DD3FC;
+  --accent-light: #0C4A6E;
 
   /* Card/Surface */
-  --card: #1e293b;
+  --card: #1E293B;
   --card-hover: #334155;
   --card-border: #334155;
 
@@ -108,15 +112,15 @@
   --border: #334155;
   --border-hover: #475569;
 
-  /* Status colors (slightly adjusted for dark mode) */
-  --success: #4ade80;
-  --success-light: #14532d;
-  --warning: #fbbf24;
-  --warning-light: #78350f;
-  --error: #f87171;
-  --error-light: #7f1d1d;
-  --info: #60a5fa;
-  --info-light: #1e3a8a;
+  /* Status colors (adjusted for dark mode) */
+  --success: #4ADE80;
+  --success-light: #14532D;
+  --warning: #FBBF24;
+  --warning-light: #78350F;
+  --error: #F87171;
+  --error-light: #7F1D1D;
+  --info: #7DD3FC;
+  --info-light: #0C4A6E;
 
   /* Shadows (softer for dark mode) */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
@@ -124,6 +128,7 @@
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+  --shadow-primary: 0 4px 14px -2px rgb(129 140 248 / 0.3);
 }
 
 /* Tailwind v4 theme integration */
@@ -142,6 +147,7 @@
   --color-secondary-hover: var(--secondary-hover);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-light: var(--accent-light);
   --color-card: var(--card);
   --color-card-hover: var(--card-hover);
@@ -187,11 +193,6 @@ body {
 
 /* Selection styling */
 ::selection {
-  background-color: var(--primary-light);
-  color: var(--primary);
-}
-
-[data-theme="dark"] ::selection {
   background-color: var(--primary);
   color: var(--primary-foreground);
 }
@@ -212,7 +213,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--border-hover);
+  background: var(--primary);
 }
 
 /* Focus visible styles */
@@ -262,28 +263,61 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
+.shadow-theme-xl {
+  box-shadow: var(--shadow-xl);
+}
+
+.shadow-primary {
+  box-shadow: var(--shadow-primary);
+}
+
 /* Gradient backgrounds */
 .gradient-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
 }
 
 .gradient-hero {
-  background: linear-gradient(180deg, var(--background) 0%, var(--background-secondary) 100%);
+  background: linear-gradient(180deg, var(--background) 0%, var(--background-tertiary) 50%, var(--background) 100%);
 }
 
-[data-theme="dark"] .gradient-hero {
-  background: linear-gradient(180deg, var(--background) 0%, var(--background-secondary) 50%, var(--background) 100%);
+.text-gradient-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* Chat Popup Animations */
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .glass {
+  background: rgba(30, 41, 59, 0.8);
+}
+
+/* Animations */
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.95);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -296,22 +330,69 @@ body {
   }
 }
 
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-primary {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+  }
+}
+
 .animate-slide-up {
-  animation: slideUp 0.2s ease-out;
+  animation: slideUp 0.4s ease-out forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.4s ease-out forwards;
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.15s ease-out;
+  animation: fadeIn 0.3s ease-out forwards;
 }
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-pulse-primary {
+  animation: pulse-primary 2s ease-in-out infinite;
+}
+
+/* Animation delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
 
 /* Sidebar transitions */
 .sidebar-transition {
   transition: width 0.3s ease, transform 0.3s ease;
-}
-
-/* Mobile menu overlay */
-.mobile-overlay {
-  animation: fadeIn 0.2s ease-out;
 }
 
 /* Chat message animations */
@@ -345,4 +426,54 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Styled modal scrollbar */
+.modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.modal-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform var(--transition-normal) ease, box-shadow var(--transition-normal) ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Card hover glow */
+.card-glow {
+  transition: all var(--transition-normal) ease;
+}
+
+.card-glow:hover {
+  box-shadow: var(--shadow-primary);
+  border-color: var(--primary);
+}
+
+/* Section divider */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
 }

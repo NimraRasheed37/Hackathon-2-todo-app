@@ -9,9 +9,10 @@ import { TaskFilters } from "@/components/tasks/TaskFilters";
 import { AddTaskModal } from "@/components/tasks/AddTaskModal";
 import { EditTaskModal } from "@/components/tasks/EditTaskModal";
 import { DeleteConfirmDialog } from "@/components/tasks/DeleteConfirmDialog";
+import { SearchBar } from "@/components/search/SearchBar";
 import { Button } from "@/components/ui/Button";
 import { Plus, ListTodo, CheckCircle2, Clock } from "lucide-react";
-import { Task, FilterStatus, SortOption } from "@/types";
+import { Task, FilterStatus, SortOption, SearchQuery } from "@/types";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -25,6 +26,7 @@ export default function DashboardPage() {
   // UI State
   const [filter, setFilter] = useState<FilterStatus>(urlFilter || "all");
   const [sort, setSort] = useState<SortOption>("created");
+  const [searchQuery, setSearchQuery] = useState<SearchQuery>({});
 
   // Sync filter with URL
   useEffect(() => {
@@ -103,6 +105,11 @@ export default function DashboardPage() {
           <span>Add Task</span>
         </Button>
       </div>
+
+      {/* Search Bar */}
+      <SearchBar
+        onSearch={setSearchQuery}
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">

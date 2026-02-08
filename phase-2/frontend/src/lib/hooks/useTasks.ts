@@ -77,6 +77,12 @@ export function useTasks({
       title: data.title,
       description: data.description || null,
       completed: false,
+      priority: data.priority || "none",
+      due_date: data.due_date || null,
+      recurrence_pattern: data.recurrence_pattern || null,
+      parent_task_id: null,
+      occurrence_number: 0,
+      tags: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
