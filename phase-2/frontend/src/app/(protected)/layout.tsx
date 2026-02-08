@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signOut, getToken } from "@/lib/auth-client";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import Link from "next/link";
 import { CheckSquare, LogOut, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -12,6 +12,7 @@ import { chatApi } from "@/lib/chat-api";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ChatPopup } from "@/components/chat/ChatPopup";
 import { cn } from "@/lib/utils";
+import { preload } from "swr";
 
 export default function ProtectedLayout({
   children,
@@ -21,9 +22,10 @@ export default function ProtectedLayout({
   const { data: session, isPending, error } = useSession();
   const hasRedirected = useRef(false);
   const tokenFetched = useRef(false);
+  const [isTokenReady, setIsTokenReady] = useState(false);
 
   // Fetch JWT token for API authentication
-  const fetchAndSetToken = useCallback(async () => {
+  const fetchAndSetToken = useCallback(async (userId: string) => {
     if (tokenFetched.current) return;
 
     try {
@@ -32,12 +34,20 @@ export default function ProtectedLayout({
         api.setToken(token);
         chatApi.setToken(token);
         tokenFetched.current = true;
-        console.log("API token set successfully");
+
+        // Preload tasks data immediately after token is set
+        const cacheKey = `/api/${userId}/tasks`;
+        preload(cacheKey, () => api.getTasks(userId));
+
+        setIsTokenReady(true);
+        console.log("API token set and tasks preloaded");
       } else {
         console.log("No token received");
+        setIsTokenReady(true); // Allow rendering even without token to show error state
       }
     } catch (error) {
       console.error("Failed to get token:", error);
+      setIsTokenReady(true); // Allow rendering to show error state
     }
   }, []);
 
@@ -62,10 +72,10 @@ export default function ProtectedLayout({
 
   // Fetch API token when session is available
   useEffect(() => {
-    if (session?.user && !tokenFetched.current) {
-      fetchAndSetToken();
+    if (session?.user?.id && !tokenFetched.current) {
+      fetchAndSetToken(session.user.id);
     }
-  }, [session?.user, fetchAndSetToken]);
+  }, [session?.user?.id, fetchAndSetToken]);
 
   const handleLogout = async () => {
     try {
@@ -80,7 +90,7 @@ export default function ProtectedLayout({
     }
   };
 
-  if (isPending) {
+  if (isPending || (session?.user && !isTokenReady)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">

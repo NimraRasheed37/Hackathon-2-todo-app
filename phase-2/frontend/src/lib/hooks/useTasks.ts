@@ -39,7 +39,9 @@ export function useTasks({
     () => api.getTasks(userId, undefined, sort),
     {
       revalidateOnFocus: false,
+      revalidateOnMount: true,
       dedupingInterval: 5000,
+      keepPreviousData: true,
     }
   );
 
