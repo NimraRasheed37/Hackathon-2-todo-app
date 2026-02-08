@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
@@ -8,10 +7,13 @@ import {
   ListTodo,
   CheckCircle2,
   MessageSquare,
-  Menu,
   X,
+  LogOut,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { Button } from "@/components/ui/Button";
 
 interface NavItem {
   href: string;
@@ -54,12 +56,21 @@ const navItems: NavItem[] = [
 
 interface SidebarProps {
   className?: string;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
+  onLogout?: () => void;
+  userName?: string;
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({
+  className,
+  isMobileOpen = false,
+  onMobileClose,
+  onLogout,
+  userName,
+}: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const currentFilter = searchParams.get("filter");
 
@@ -79,24 +90,11 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-20 left-4 z-50 p-2 rounded-lg bg-card border border-border shadow-md hover:bg-card-hover transition-colors"
-        aria-label="Toggle menu"
-      >
-        {isMobileOpen ? (
-          <X className="w-5 h-5 text-foreground" />
-        ) : (
-          <Menu className="w-5 h-5 text-foreground" />
-        )}
-      </button>
-
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/50 z-40 animate-fade-in"
-          onClick={() => setIsMobileOpen(false)}
+          onClick={onMobileClose}
         />
       )}
 
@@ -121,7 +119,7 @@ export function Sidebar({ className }: SidebarProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setIsMobileOpen(false)}
+                onClick={onMobileClose}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
                   active
@@ -157,6 +155,46 @@ export function Sidebar({ className }: SidebarProps) {
           })}
         </nav>
 
+        {/* Mobile Footer - Theme Toggle & Logout */}
+        <div className="lg:hidden border-t border-border p-3 space-y-2">
+          {/* User Info */}
+          {userName && (
+            <div className="flex items-center gap-2 text-foreground-secondary px-3 py-2 rounded-lg bg-secondary">
+              <User className="w-4 h-4" />
+              <span className="font-medium text-sm truncate">{userName}</span>
+            </div>
+          )}
+
+          {/* Theme Toggle */}
+          <div className="flex items-center justify-between px-3 py-2">
+            <span className="text-sm text-foreground-secondary">Theme</span>
+            <ThemeToggle size="sm" />
+          </div>
+
+          {/* Logout Button */}
+          {onLogout && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onLogout}
+              className="w-full justify-start text-foreground-secondary hover:text-error"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          )}
+        </div>
+
+        {/* Mobile Close Button */}
+        {isMobileOpen && (
+          <button
+            onClick={onMobileClose}
+            className="lg:hidden absolute top-3 right-3 p-1.5 rounded-lg text-foreground-muted hover:text-foreground hover:bg-secondary transition-colors"
+            aria-label="Close menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </aside>
     </>
   );

@@ -3,7 +3,7 @@
 import { useSession, signOut, getToken } from "@/lib/auth-client";
 import { useEffect, useRef, useCallback, useState } from "react";
 import Link from "next/link";
-import { CheckSquare, LogOut, User, Loader2 } from "lucide-react";
+import { CheckSquare, LogOut, User, Loader2, Menu } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ export default function ProtectedLayout({
   const hasRedirected = useRef(false);
   const tokenFetched = useRef(false);
   const [isTokenReady, setIsTokenReady] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Fetch JWT token for API authentication
   const fetchAndSetToken = useCallback(async (userId: string) => {
@@ -111,23 +112,35 @@ export default function ProtectedLayout({
       <header className="bg-card border-b border-border sticky top-0 z-50 shadow-sm">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link href="/dashboard" className="flex items-center gap-2 group">
-              <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-primary text-primary-foreground group-hover:shadow-md transition-shadow">
-                <CheckSquare className="w-5 h-5" />
-              </div>
-              <span className="text-xl font-bold text-foreground hidden sm:inline">
-                Mark<span className="text-primary">It</span>
-              </span>
-            </Link>
+            {/* Left side - Menu button (mobile) + Logo */}
+            <div className="flex items-center gap-2">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+                className="lg:hidden p-2 rounded-lg text-foreground-secondary hover:bg-secondary hover:text-foreground transition-colors"
+                aria-label="Toggle menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
 
-            {/* User section */}
-            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Logo */}
+              <Link href="/dashboard" className="flex items-center gap-2 group">
+                <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-primary text-primary-foreground group-hover:shadow-md transition-shadow">
+                  <CheckSquare className="w-5 h-5" />
+                </div>
+                <span className="text-xl font-bold text-foreground">
+                  Mark<span className="text-primary">It</span>
+                </span>
+              </Link>
+            </div>
+
+            {/* User section - hidden on mobile (in sidebar instead) */}
+            <div className="hidden lg:flex items-center gap-3">
               <ThemeToggle size="sm" />
 
-              <div className="flex items-center gap-2 text-foreground-secondary px-2 sm:px-3 py-1.5 rounded-lg bg-secondary">
+              <div className="flex items-center gap-2 text-foreground-secondary px-3 py-1.5 rounded-lg bg-secondary">
                 <User className="w-4 h-4" />
-                <span className="hidden sm:inline font-medium text-sm max-w-[120px] truncate">
+                <span className="font-medium text-sm max-w-[120px] truncate">
                   {session.user.name}
                 </span>
               </div>
@@ -139,7 +152,7 @@ export default function ProtectedLayout({
                 className="text-foreground-secondary hover:text-foreground"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline ml-1">Logout</span>
+                <span className="ml-1">Logout</span>
               </Button>
             </div>
           </div>
@@ -147,7 +160,12 @@ export default function ProtectedLayout({
       </header>
 
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar
+        isMobileOpen={isMobileSidebarOpen}
+        onMobileClose={() => setIsMobileSidebarOpen(false)}
+        onLogout={handleLogout}
+        userName={session.user.name}
+      />
 
       {/* Main content - with sidebar offset */}
       <main

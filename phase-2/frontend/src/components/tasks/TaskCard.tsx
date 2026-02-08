@@ -2,11 +2,14 @@
 
 import { memo, useState } from "react";
 import * as Checkbox from "@radix-ui/react-checkbox";
-import { Check, Pencil, Trash2 } from "lucide-react";
+import { Check, Pencil, Trash2, Calendar, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
 import { Task } from "@/types";
 import { Button } from "@/components/ui/Button";
+import { PriorityBadge } from "./PrioritySelector";
+import { RecurrenceBadge } from "./RecurrenceSelector";
+import { TagList } from "./TagManager";
 
 export interface TaskCardProps {
   task: Task;
@@ -65,14 +68,24 @@ export const TaskCard = memo(function TaskCard({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <h3
-            className={cn(
-              "font-medium text-foreground transition-all duration-200",
-              task.completed && "line-through text-foreground-muted"
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3
+              className={cn(
+                "font-medium text-foreground transition-all duration-200",
+                task.completed && "line-through text-foreground-muted"
+              )}
+            >
+              {task.title}
+            </h3>
+            {/* Priority Badge */}
+            {task.priority && task.priority !== "none" && (
+              <PriorityBadge priority={task.priority} />
             )}
-          >
-            {task.title}
-          </h3>
+            {/* Recurrence Badge */}
+            {task.recurrence_pattern && (
+              <RecurrenceBadge pattern={task.recurrence_pattern} />
+            )}
+          </div>
           {task.description && (
             <p
               className={cn(
@@ -82,6 +95,40 @@ export const TaskCard = memo(function TaskCard({
             >
               {task.description}
             </p>
+          )}
+          {/* Due Date */}
+          {task.due_date && (
+            <div className={cn(
+              "flex items-center gap-1 mt-2 text-xs",
+              new Date(task.due_date) < new Date() && !task.completed
+                ? "text-red-600 dark:text-red-400"
+                : "text-foreground-muted"
+            )}>
+              <Calendar className="w-3 h-3" />
+              <span>
+                {new Date(task.due_date).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: new Date(task.due_date).getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
+                })}
+              </span>
+              <Clock className="w-3 h-3 ml-1" />
+              <span>
+                {new Date(task.due_date).toLocaleTimeString(undefined, {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+              {new Date(task.due_date) < new Date() && !task.completed && (
+                <span className="font-medium ml-1">(Overdue)</span>
+              )}
+            </div>
+          )}
+          {/* Tags */}
+          {task.tags && task.tags.length > 0 && (
+            <div className="mt-2">
+              <TagList tags={task.tags} />
+            </div>
           )}
         </div>
       </div>
@@ -93,8 +140,8 @@ export const TaskCard = memo(function TaskCard({
           {formatRelativeTime(task.updated_at)}
         </span>
 
-        {/* Actions - visible on hover */}
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Actions - always visible on mobile, hover on desktop */}
+        <div className="flex gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
           <Button
             variant="ghost"
             size="sm"
