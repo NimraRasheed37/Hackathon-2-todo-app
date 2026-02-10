@@ -1,0 +1,298 @@
+openapi: 3.0.3
+info:
+  title: Todo App - Search API
+  version: 1.0.0
+  description: API for searching and filtering tasks
+
+paths:
+  /api/tasks/search:
+    post:
+      summary: Search tasks with filters
+      operationId: searchTasks
+      tags:
+        - Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchQuery'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResults'
+        '400':
+          description: Invalid search query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/tasks/search/suggestions:
+    get:
+      summary: Get search suggestions based on partial text
+      operationId: getSearchSuggestions
+      tags:
+        - Search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 5
+            maximum: 10
+      responses:
+        '200':
+          description: Search suggestions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchSuggestions'
+
+  /api/tasks/filters:
+    get:
+      summary: Get available filter options for the current user
+      operationId: getFilterOptions
+      tags:
+        - Search
+      responses:
+        '200':
+          description: Available filter options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilterOptions'
+
+components:
+  schemas:
+    SearchQuery:
+      type: object
+      properties:
+        text:
+          type: string
+          description: Full-text search query
+        status:
+          type: array
+          items:
+            type: string
+            enum: [pending, in_progress, completed]
+          description: Filter by task status
+        priority:
+          type: array
+          items:
+            type: string
+            enum: [none, low, medium, high, critical]
+          description: Filter by priority level
+        tags:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Filter by tag IDs (OR logic)
+        dueDateFrom:
+          type: string
+          format: date
+          description: Tasks due on or after this date
+        dueDateTo:
+          type: string
+          format: date
+          description: Tasks due on or before this date
+        hasRecurrence:
+          type: boolean
+          description: Filter recurring tasks
+        hasDueDate:
+          type: boolean
+          description: Filter tasks with due dates
+        hasReminder:
+          type: boolean
+          description: Filter tasks with reminders
+        sortBy:
+          type: string
+          enum: [relevance, dueDate, priority, createdAt, updatedAt]
+          default: relevance
+        sortOrder:
+          type: string
+          enum: [asc, desc]
+          default: desc
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+
+    SearchResults:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskSearchResult'
+        total:
+          type: integer
+          description: Total number of matching tasks
+        hasMore:
+          type: boolean
+          description: Whether there are more results
+        query:
+          $ref: '#/components/schemas/SearchQuery'
+          description: Echo of the search query
+        facets:
+          $ref: '#/components/schemas/SearchFacets'
+          description: Aggregations for refining search
+
+    TaskSearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagSummary'
+        hasRecurrence:
+          type: boolean
+        hasReminder:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        highlights:
+          type: object
+          properties:
+            title:
+              type: string
+              description: Title with search terms highlighted
+            description:
+              type: string
+              description: Description snippet with search terms highlighted
+        score:
+          type: number
+          description: Relevance score (when sorting by relevance)
+
+    TagSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+
+    SearchFacets:
+      type: object
+      properties:
+        status:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacetCount'
+        priority:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacetCount'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagFacetCount'
+
+    FacetCount:
+      type: object
+      properties:
+        value:
+          type: string
+        count:
+          type: integer
+
+    TagFacetCount:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+        count:
+          type: integer
+
+    SearchSuggestions:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+              type:
+                type: string
+                enum: [task, tag, recent]
+              id:
+                type: string
+                format: uuid
+
+    FilterOptions:
+      type: object
+      properties:
+        statuses:
+          type: array
+          items:
+            type: string
+        priorities:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagSummary'
+        dueDateRange:
+          type: object
+          properties:
+            min:
+              type: string
+              format: date
+            max:
+              type: string
+              format: date
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object

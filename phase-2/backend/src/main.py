@@ -3,13 +3,14 @@
 import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
-from src.api.routes import chat, tasks
+from src.api.routes import chat, tasks, recurring, reminders, notifications, tags, search, subscriptions
+from src.middleware.metrics import PrometheusMiddleware, get_metrics, get_metrics_content_type
 from src.config import get_settings
 from src.core.exceptions import (
     AuthenticationError,
@@ -83,6 +84,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+# Add Prometheus metrics middleware (must be added first to capture all requests)
+app.add_middleware(PrometheusMiddleware)
 
 # Add CORS middleware
 app.add_middleware(
@@ -207,10 +211,11 @@ async def generic_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Health check endpoint
+# Health check endpoints for Kubernetes probes
+
 @app.get("/", tags=["health"])
-async def health_check():
-    """Health check endpoint."""
+async def root_health_check():
+    """Root health check endpoint (legacy)."""
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
@@ -222,6 +227,52 @@ async def health_check():
         )
 
 
+@app.get("/health", tags=["health"])
+async def liveness_check():
+    """Liveness probe - is the application running?
+
+    Used by Kubernetes to determine if the container should be restarted.
+    Returns 200 if the application process is alive.
+    """
+    return {"status": "alive"}
+
+
+@app.get("/ready", tags=["health"])
+async def readiness_check():
+    """Readiness probe - is the application ready to serve traffic?
+
+    Used by Kubernetes to determine if the pod should receive traffic.
+    Checks database connectivity before returning ready status.
+    """
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "ready", "database": "connected"}
+    except Exception:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "not_ready", "database": "disconnected"},
+        )
+
+
+@app.get("/metrics", tags=["monitoring"])
+async def metrics():
+    """Prometheus metrics endpoint.
+
+    Exposes application metrics in Prometheus format for scraping.
+    """
+    return Response(
+        content=get_metrics(),
+        media_type=get_metrics_content_type(),
+    )
+
+
 # Include routers
 app.include_router(tasks.router, prefix="/api", tags=["tasks"])
+app.include_router(recurring.router, prefix="/api", tags=["recurring"])
+app.include_router(reminders.router, prefix="/api", tags=["reminders"])
+app.include_router(notifications.router, prefix="/api", tags=["notifications"])
+app.include_router(tags.router, prefix="/api", tags=["tags"])
+app.include_router(search.router, prefix="/api", tags=["search"])
+app.include_router(subscriptions.router, tags=["subscriptions"])
 app.include_router(chat.router, prefix="/api", tags=["chat"])

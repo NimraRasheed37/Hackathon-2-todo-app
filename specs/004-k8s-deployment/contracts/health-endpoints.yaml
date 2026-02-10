@@ -1,0 +1,103 @@
+# Health Endpoints Contract
+# Defines the API contract for Kubernetes health probes
+
+openapi: 3.0.3
+info:
+  title: Health Check Endpoints
+  description: Endpoints for Kubernetes liveness and readiness probes
+  version: 1.0.0
+
+paths:
+  /health:
+    get:
+      summary: Liveness Probe
+      description: |
+        Returns 200 if the application process is running.
+        Used by Kubernetes liveness probe to determine if container should be restarted.
+      operationId: livenessCheck
+      tags:
+        - health
+      responses:
+        '200':
+          description: Application is alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LivenessResponse'
+              example:
+                status: alive
+
+  /ready:
+    get:
+      summary: Readiness Probe
+      description: |
+        Returns 200 if the application is ready to accept traffic.
+        Checks database connectivity and other dependencies.
+        Used by Kubernetes readiness probe to determine if pod should receive traffic.
+      operationId: readinessCheck
+      tags:
+        - health
+      responses:
+        '200':
+          description: Application is ready to serve traffic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+              example:
+                status: ready
+                database: connected
+        '503':
+          description: Application is not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+              example:
+                status: not_ready
+                database: disconnected
+
+  /api/health:
+    get:
+      summary: Frontend Health Check
+      description: |
+        Next.js API route for frontend health checks.
+        Returns 200 if the frontend application is running.
+      operationId: frontendHealthCheck
+      tags:
+        - health
+      responses:
+        '200':
+          description: Frontend is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LivenessResponse'
+              example:
+                status: healthy
+
+components:
+  schemas:
+    LivenessResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [alive, healthy]
+          description: Indicates the application is running
+
+    ReadinessResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+          description: Indicates if application can serve traffic
+        database:
+          type: string
+          enum: [connected, disconnected]
+          description: Database connection status

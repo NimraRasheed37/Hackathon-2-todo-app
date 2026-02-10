@@ -1,0 +1,324 @@
+openapi: 3.0.3
+info:
+  title: Todo App - Tags API
+  version: 1.0.0
+  description: API for managing task tags and labels
+
+paths:
+  /api/tags:
+    get:
+      summary: List all user's tags
+      operationId: listTags
+      tags:
+        - Tags
+      parameters:
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [name, usageCount, createdAt]
+            default: name
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+      responses:
+        '200':
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+
+    post:
+      summary: Create a new tag
+      operationId: createTag
+      tags:
+        - Tags
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagCreate'
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          description: Invalid tag data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Tag with this name already exists
+
+  /api/tags/{tag_id}:
+    get:
+      summary: Get a specific tag
+      operationId: getTag
+      tags:
+        - Tags
+      parameters:
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tag details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '404':
+          description: Tag not found
+
+    put:
+      summary: Update a tag
+      operationId: updateTag
+      tags:
+        - Tags
+      parameters:
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagUpdate'
+      responses:
+        '200':
+          description: Tag updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          description: Invalid tag data
+        '404':
+          description: Tag not found
+        '409':
+          description: Tag with this name already exists
+
+    delete:
+      summary: Delete a tag
+      operationId: deleteTag
+      tags:
+        - Tags
+      parameters:
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Tag deleted (removed from all tasks)
+        '404':
+          description: Tag not found
+
+  /api/tasks/{task_id}/tags:
+    get:
+      summary: List tags for a task
+      operationId: listTaskTags
+      tags:
+        - Tags
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of tags on the task
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '404':
+          description: Task not found
+
+    post:
+      summary: Add tags to a task
+      operationId: addTaskTags
+      tags:
+        - Tags
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskTagsUpdate'
+      responses:
+        '200':
+          description: Tags added to task
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '400':
+          description: Invalid tag IDs
+        '404':
+          description: Task not found
+
+    put:
+      summary: Replace all tags on a task
+      operationId: setTaskTags
+      tags:
+        - Tags
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskTagsUpdate'
+      responses:
+        '200':
+          description: Tags set on task
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '400':
+          description: Invalid tag IDs
+        '404':
+          description: Task not found
+
+  /api/tasks/{task_id}/tags/{tag_id}:
+    delete:
+      summary: Remove a tag from a task
+      operationId: removeTaskTag
+      tags:
+        - Tags
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Tag removed from task
+        '404':
+          description: Task or tag not found
+
+components:
+  schemas:
+    TagCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        color:
+          type: string
+          pattern: ^#[0-9A-Fa-f]{6}$
+          default: '#808080'
+        icon:
+          type: string
+          maxLength: 10
+
+    TagUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        color:
+          type: string
+          pattern: ^#[0-9A-Fa-f]{6}$
+        icon:
+          type: string
+          maxLength: 10
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+        icon:
+          type: string
+        usageCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    TaskTagsUpdate:
+      type: object
+      required:
+        - tagIds
+      properties:
+        tagIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object

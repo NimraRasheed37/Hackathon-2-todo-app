@@ -12,7 +12,6 @@ import {
   User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 
 interface NavItem {
@@ -155,7 +154,7 @@ export function Sidebar({
           })}
         </nav>
 
-        {/* Mobile Footer - Theme Toggle & Logout */}
+        {/* Mobile Footer - User Info & Logout */}
         <div className="lg:hidden border-t border-border p-3 space-y-2">
           {/* User Info */}
           {userName && (
@@ -164,12 +163,6 @@ export function Sidebar({
               <span className="font-medium text-sm truncate">{userName}</span>
             </div>
           )}
-
-          {/* Theme Toggle */}
-          <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-sm text-foreground-secondary">Theme</span>
-            <ThemeToggle size="sm" />
-          </div>
 
           {/* Logout Button */}
           {onLogout && (

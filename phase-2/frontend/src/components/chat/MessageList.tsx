@@ -116,7 +116,8 @@ export function MessageList({
               Try saying:
             </div>
             {[
-              '"Add buy milk to my tasks"',
+              '"Add buy milk with high priority"',
+              '"Add submit report by tomorrow 5pm"',
               '"Show my pending tasks"',
               '"Mark buy milk as done"',
             ].map((example, i) => (

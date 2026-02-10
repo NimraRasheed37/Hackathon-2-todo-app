@@ -72,3 +72,13 @@ jest-results.json
 *.pid
 *.seed
 *.pid.lock
+
+# Kubernetes secrets (never commit actual secrets)
+k8s/manifests/secret.yaml
+k8s/helm/*/secrets.yaml
+*.secret.yaml
+kubeconfig*
+.kube/
+
+# Local tools
+tools/

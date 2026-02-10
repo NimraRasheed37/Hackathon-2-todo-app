@@ -1,0 +1,278 @@
+openapi: 3.0.3
+info:
+  title: Todo App - Recurring Tasks API
+  version: 1.0.0
+  description: API for managing recurring task patterns
+
+paths:
+  /api/tasks/{task_id}/recurrence:
+    post:
+      summary: Set recurrence pattern for a task
+      operationId: createRecurrence
+      tags:
+        - Recurring Tasks
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecurrencePatternCreate'
+      responses:
+        '201':
+          description: Recurrence pattern created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurrencePattern'
+        '400':
+          description: Invalid recurrence pattern
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Task not found
+
+    get:
+      summary: Get recurrence pattern for a task
+      operationId: getRecurrence
+      tags:
+        - Recurring Tasks
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Recurrence pattern
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurrencePattern'
+        '404':
+          description: Task or recurrence not found
+
+    put:
+      summary: Update recurrence pattern
+      operationId: updateRecurrence
+      tags:
+        - Recurring Tasks
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecurrencePatternUpdate'
+      responses:
+        '200':
+          description: Recurrence pattern updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurrencePattern'
+        '400':
+          description: Invalid recurrence pattern
+        '404':
+          description: Task or recurrence not found
+
+    delete:
+      summary: Remove recurrence pattern
+      operationId: deleteRecurrence
+      tags:
+        - Recurring Tasks
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Recurrence removed
+        '404':
+          description: Task or recurrence not found
+
+  /api/tasks/{task_id}/occurrences:
+    get:
+      summary: List all occurrences of a recurring task
+      operationId: listOccurrences
+      tags:
+        - Recurring Tasks
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of task occurrences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskOccurrenceList'
+
+components:
+  schemas:
+    RecurrencePatternCreate:
+      type: object
+      required:
+        - frequency
+      properties:
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly, yearly, custom]
+        interval:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Repeat every N periods
+        daysOfWeek:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+          description: Days of week (0=Sunday, 6=Saturday)
+        dayOfMonth:
+          type: integer
+          minimum: 1
+          maximum: 31
+        endDate:
+          type: string
+          format: date
+        maxOccurrences:
+          type: integer
+          minimum: 1
+
+    RecurrencePatternUpdate:
+      type: object
+      properties:
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly, yearly, custom]
+        interval:
+          type: integer
+          minimum: 1
+        daysOfWeek:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+        dayOfMonth:
+          type: integer
+          minimum: 1
+          maximum: 31
+        endDate:
+          type: string
+          format: date
+        maxOccurrences:
+          type: integer
+          minimum: 1
+        isActive:
+          type: boolean
+
+    RecurrencePattern:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly, yearly, custom]
+        interval:
+          type: integer
+        daysOfWeek:
+          type: array
+          items:
+            type: integer
+        dayOfMonth:
+          type: integer
+        endDate:
+          type: string
+          format: date
+        maxOccurrences:
+          type: integer
+        nextOccurrence:
+          type: string
+          format: date-time
+        totalOccurrences:
+          type: integer
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    TaskOccurrenceList:
+      type: object
+      properties:
+        occurrences:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskOccurrence'
+        total:
+          type: integer
+        hasMore:
+          type: boolean
+
+    TaskOccurrence:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        occurrenceNumber:
+          type: integer
+        status:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object

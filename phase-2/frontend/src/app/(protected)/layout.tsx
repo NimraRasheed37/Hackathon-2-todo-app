@@ -134,26 +134,28 @@ export default function ProtectedLayout({
               </Link>
             </div>
 
-            {/* User section - hidden on mobile (in sidebar instead) */}
-            <div className="hidden lg:flex items-center gap-3">
+            {/* Right side - theme toggle always visible, user section desktop only */}
+            <div className="flex items-center gap-3">
               <ThemeToggle size="sm" />
 
-              <div className="flex items-center gap-2 text-foreground-secondary px-3 py-1.5 rounded-lg bg-secondary">
-                <User className="w-4 h-4" />
-                <span className="font-medium text-sm max-w-[120px] truncate">
-                  {session.user.name}
-                </span>
-              </div>
+              <div className="hidden lg:flex items-center gap-3">
+                <div className="flex items-center gap-2 text-foreground-secondary px-3 py-1.5 rounded-lg bg-secondary">
+                  <User className="w-4 h-4" />
+                  <span className="font-medium text-sm max-w-[120px] truncate">
+                    {session.user.name}
+                  </span>
+                </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="text-foreground-secondary hover:text-foreground"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="ml-1">Logout</span>
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-foreground-secondary hover:text-foreground"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="ml-1">Logout</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>

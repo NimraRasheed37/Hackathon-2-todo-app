@@ -1,0 +1,175 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-todo_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Dapr State Store
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Kafka for Event Streaming
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # Backend API with Dapr Sidecar
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-todo_db}
+      CORS_ORIGINS: http://localhost:3000
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-production}
+      DAPR_ENABLED: "true"
+      DAPR_HTTP_PORT: 3500
+      REDIS_HOST: redis:6379
+      KAFKA_BROKERS: kafka:9092
+      RUN_MODE: api
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - todo-network
+
+  # Dapr Sidecar for Backend
+  backend-dapr:
+    image: daprio/daprd:1.12.0
+    command: [
+      "./daprd",
+      "--app-id", "todo-backend",
+      "--app-port", "8000",
+      "--dapr-http-port", "3500",
+      "--dapr-grpc-port", "50001",
+      "--components-path", "/components",
+      "--config", "/config/config.yaml",
+      "--log-level", "info"
+    ]
+    volumes:
+      - ./backend/dapr/components:/components
+      - ./backend/dapr:/config
+    network_mode: "service:backend"
+    depends_on:
+      - backend
+      - redis
+      - kafka
+
+  # Event Consumer with Dapr Sidecar
+  consumer:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-todo_db}
+      DAPR_ENABLED: "true"
+      DAPR_HTTP_PORT: 3500
+      REDIS_HOST: redis:6379
+      KAFKA_BROKERS: kafka:9092
+      RUN_MODE: consumer
+    ports:
+      - "3501:3500"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - todo-network
+
+  # Dapr Sidecar for Consumer
+  consumer-dapr:
+    image: daprio/daprd:1.12.0
+    command: [
+      "./daprd",
+      "--app-id", "todo-consumer",
+      "--app-port", "3500",
+      "--dapr-http-port", "3501",
+      "--dapr-grpc-port", "50002",
+      "--components-path", "/components",
+      "--config", "/config/config.yaml",
+      "--log-level", "info"
+    ]
+    volumes:
+      - ./backend/dapr/components:/components
+      - ./backend/dapr:/config
+    network_mode: "service:consumer"
+    depends_on:
+      - consumer
+      - redis
+      - kafka
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_BETTER_AUTH_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+networks:
+  todo-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

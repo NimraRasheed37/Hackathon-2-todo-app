@@ -24,3 +24,13 @@ bcrypt>=4.1.0
 
 # AI Integration (Phase 3)
 openai>=1.0.0
+
+# Event-Driven Architecture (Phase 5)
+aiokafka>=0.10.0
+httpx>=0.27.0
+
+# Database Migrations
+alembic>=1.13.0
+
+# Prometheus Metrics
+prometheus-client>=0.20.0

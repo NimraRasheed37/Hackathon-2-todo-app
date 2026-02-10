@@ -1,0 +1,20 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+    - name: brokers
+      value: "${KAFKA_BROKERS:-localhost:9092}"
+    - name: consumerGroup
+      value: "todo-backend"
+    - name: authType
+      value: "none"
+    - name: maxMessageBytes
+      value: "1048576"
+    - name: initialOffset
+      value: "oldest"
+    - name: version
+      value: "2.0.0"

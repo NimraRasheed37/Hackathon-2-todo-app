@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: todo-app
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secrets.yaml
+  # Application deployments
+  - backend-deployment.yaml
+  - frontend-deployment.yaml
+  - consumer-deployment.yaml
+  # Dapr components
+  - ../../dapr/components/pubsub-kafka.yaml
+  - ../../dapr/components/statestore-redis.yaml
+  - ../../dapr/components/secrets.yaml
+  - ../../dapr/config/config.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: todo-app
+  app.kubernetes.io/managed-by: kustomize
+
+commonAnnotations:
+  app.kubernetes.io/version: "5.0.0"
+
+configMapGenerator:
+  - name: todo-app-env
+    behavior: merge
+    literals:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+
+images:
+  - name: todo-backend
+    newName: ghcr.io/your-org/todo-backend
+    newTag: latest
+  - name: todo-frontend
+    newName: ghcr.io/your-org/todo-frontend
+    newTag: latest

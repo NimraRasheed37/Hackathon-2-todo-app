@@ -1,0 +1,64 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: todo-app-staging
+
+namePrefix: staging-
+
+resources:
+  - ../../base
+
+replicas:
+  - name: backend-deployment
+    count: 1
+  - name: frontend-deployment
+    count: 1
+
+configMapGenerator:
+  - name: todo-app-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=DEBUG
+      - CORS_ORIGINS=https://staging.your-domain.com
+
+patches:
+  - target:
+      kind: Deployment
+      name: backend-deployment
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 100m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 256Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 500m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 512Mi
+
+  - target:
+      kind: Deployment
+      name: frontend-deployment
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 50m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 128Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 200m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 256Mi
+
+images:
+  - name: ghcr.io/your-org/todo-backend
+    newTag: staging
+  - name: ghcr.io/your-org/todo-frontend
+    newTag: staging

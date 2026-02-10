@@ -328,7 +328,7 @@ export function ChatPopup() {
                       </div>
                       <button
                         onClick={(e) => handleDeleteConversation(conv.id, e)}
-                        className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-error/10 hover:text-error rounded-lg transition-all"
+                        className="p-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-error/10 hover:text-error rounded-lg transition-all"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />

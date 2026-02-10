@@ -1,0 +1,86 @@
+# Default values for todo-app Helm chart
+
+# Global settings
+global:
+  environment: local
+
+# Frontend configuration
+frontend:
+  name: todo-frontend
+  replicas: 2
+  image:
+    repository: todo-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  probes:
+    liveness:
+      path: /api/health
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      failureThreshold: 3
+    readiness:
+      path: /api/health
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      failureThreshold: 3
+
+# Backend configuration
+backend:
+  name: todo-backend
+  replicas: 2
+  image:
+    repository: todo-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "400m"
+  probes:
+    liveness:
+      path: /health
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      failureThreshold: 3
+    readiness:
+      path: /ready
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      failureThreshold: 3
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  host: todo.local
+  annotations: {}
+
+# ConfigMap values (non-sensitive)
+config:
+  apiUrl: http://todo-backend:8000
+  frontendUrl: http://todo.local
+  corsOrigins: http://todo.local
+  logLevel: info
+
+# Secret values (sensitive - pass via --set flags)
+secrets:
+  databaseUrl: ""
+  openaiApiKey: ""
+  jwtSecret: ""
+  betterAuthSecret: ""

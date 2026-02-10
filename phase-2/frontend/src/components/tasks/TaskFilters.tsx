@@ -27,6 +27,8 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: "created", label: "Newest first" },
   { value: "updated", label: "Recently updated" },
   { value: "title", label: "A-Z" },
+  { value: "priority", label: "Priority" },
+  { value: "due_date", label: "Due date" },
 ];
 
 export function TaskFilters({

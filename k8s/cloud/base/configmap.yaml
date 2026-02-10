@@ -1,0 +1,45 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-app-config
+  namespace: todo-app
+  labels:
+    app.kubernetes.io/name: todo-app
+data:
+  # Application settings
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+
+  # CORS settings
+  CORS_ORIGINS: "https://your-domain.com"
+
+  # Dapr settings
+  DAPR_ENABLED: "true"
+  DAPR_HTTP_PORT: "3500"
+  DAPR_GRPC_PORT: "50001"
+
+  # Kafka settings
+  KAFKA_BROKERS: "kafka:9092"
+  KAFKA_CONSUMER_GROUP: "todo-app"
+
+  # Cache settings
+  CACHE_ENABLED: "true"
+  CACHE_TTL_SECONDS: "300"
+
+  # Feature flags
+  ENABLE_RECURRING_TASKS: "true"
+  ENABLE_REMINDERS: "true"
+  ENABLE_SEARCH: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: todo-app
+  labels:
+    app.kubernetes.io/name: todo-frontend
+data:
+  # Frontend environment
+  NEXT_PUBLIC_API_URL: "https://api.your-domain.com"
+  NEXT_PUBLIC_AUTH_URL: "https://your-domain.com"

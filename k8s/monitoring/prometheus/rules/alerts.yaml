@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: monitoring
+data:
+  alerts.yaml: |
+    groups:
+      - name: todo-app
+        rules:
+          # High error rate alert
+          - alert: HighErrorRate
+            expr: |
+              sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+              /
+              sum(rate(http_requests_total[5m])) by (service)
+              > 0.05
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "High error rate on {{ $labels.service }}"
+              description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.service }}"
+
+          # High latency alert
+          - alert: HighLatency
+            expr: |
+              histogram_quantile(0.95,
+                sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
+              ) > 0.5
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High latency on {{ $labels.service }}"
+              description: "P95 latency is {{ $value | humanizeDuration }} for {{ $labels.service }}"
+
+          # Pod not ready
+          - alert: PodNotReady
+            expr: |
+              kube_pod_status_ready{condition="true", namespace=~"todo-app.*"} == 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pod {{ $labels.pod }} not ready"
+              description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been not ready for 5 minutes"
+
+          # High memory usage
+          - alert: HighMemoryUsage
+            expr: |
+              container_memory_usage_bytes{namespace=~"todo-app.*"}
+              /
+              container_spec_memory_limit_bytes{namespace=~"todo-app.*"}
+              > 0.85
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage for {{ $labels.container }}"
+              description: "Memory usage is {{ $value | humanizePercentage }} for {{ $labels.container }}"
+
+          # High CPU usage
+          - alert: HighCPUUsage
+            expr: |
+              rate(container_cpu_usage_seconds_total{namespace=~"todo-app.*"}[5m])
+              /
+              container_spec_cpu_quota{namespace=~"todo-app.*"}
+              * 100000 > 80
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage for {{ $labels.container }}"
+              description: "CPU usage is {{ $value | humanize }}% for {{ $labels.container }}"
+
+          # Kafka consumer lag
+          - alert: KafkaConsumerLag
+            expr: kafka_consumer_lag > 1000
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Kafka consumer lag is high"
+              description: "Consumer lag is {{ $value }} messages for {{ $labels.topic }}"
+
+          # Database connection failures
+          - alert: DatabaseConnectionFailures
+            expr: rate(database_connection_errors_total[5m]) > 0.1
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Database connection failures detected"
+              description: "Database connection error rate is {{ $value | humanize }}/s"
+
+      - name: slo
+        rules:
+          # SLO: 99.5% availability
+          - record: slo:availability:ratio
+            expr: |
+              1 - (
+                sum(rate(http_requests_total{status=~"5.."}[1h]))
+                /
+                sum(rate(http_requests_total[1h]))
+              )
+
+          - alert: SLOAvailabilityBreach
+            expr: slo:availability:ratio < 0.995
+            for: 15m
+            labels:
+              severity: critical
+            annotations:
+              summary: "SLO availability breach"
+              description: "Current availability is {{ $value | humanizePercentage }}, below 99.5% SLO"

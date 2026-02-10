@@ -1,0 +1,182 @@
+name: CD - Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version/SHA to deploy (leave empty for latest)"
+        required: false
+        default: ""
+      skip_approval:
+        description: "Skip manual approval (for hotfixes)"
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ${{ github.repository }}/todo-backend
+  FRONTEND_IMAGE: ${{ github.repository }}/todo-frontend
+
+jobs:
+  validate:
+    name: Validate Deployment
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify images exist
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+
+          # Check backend image
+          docker manifest inspect ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:$VERSION || \
+            (echo "Backend image not found" && exit 1)
+
+          # Check frontend image
+          docker manifest inspect ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:$VERSION || \
+            (echo "Frontend image not found" && exit 1)
+
+          echo "Both images verified for version $VERSION"
+
+  approval:
+    name: Approval Gate
+    runs-on: ubuntu-latest
+    needs: validate
+    if: ${{ !github.event.inputs.skip_approval }}
+    environment: production
+    steps:
+      - name: Approval checkpoint
+        run: |
+          echo "Deployment approved for version: ${{ needs.validate.outputs.version }}"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [validate, approval]
+    if: always() && needs.validate.result == 'success' && (needs.approval.result == 'success' || needs.approval.result == 'skipped')
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "v1.28.0"
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Create deployment backup
+        run: |
+          kubectl get deployment -n todo-app-production -o yaml > backup-deployments.yaml || true
+          echo "Backup created"
+
+      - name: Update image tags
+        working-directory: k8s/cloud/overlays/production
+        run: |
+          VERSION=${{ needs.validate.outputs.version }}
+          kustomize edit set image \
+            ghcr.io/your-org/todo-backend=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:$VERSION \
+            ghcr.io/your-org/todo-frontend=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:$VERSION
+
+      - name: Deploy to production
+        id: deploy
+        run: |
+          kubectl apply -k k8s/cloud/overlays/production
+
+      - name: Wait for rollout
+        id: rollout
+        run: |
+          kubectl rollout status deployment/prod-backend-deployment -n todo-app-production --timeout=600s
+          kubectl rollout status deployment/prod-frontend-deployment -n todo-app-production --timeout=600s
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n todo-app-production
+          kubectl get services -n todo-app-production
+          kubectl get hpa -n todo-app-production
+
+      - name: Run smoke tests
+        id: smoke
+        run: |
+          BACKEND_URL="${{ vars.PRODUCTION_API_URL || 'https://api.your-domain.com' }}"
+          for i in {1..10}; do
+            if curl -sf "$BACKEND_URL/health"; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 15
+          done
+          echo "Health check failed after 10 attempts"
+          exit 1
+
+      - name: Rollback on failure
+        if: failure() && (steps.rollout.outcome == 'failure' || steps.smoke.outcome == 'failure')
+        run: |
+          echo "Deployment failed, initiating rollback..."
+          kubectl rollout undo deployment/prod-backend-deployment -n todo-app-production
+          kubectl rollout undo deployment/prod-frontend-deployment -n todo-app-production
+          kubectl rollout status deployment/prod-backend-deployment -n todo-app-production --timeout=300s
+          kubectl rollout status deployment/prod-frontend-deployment -n todo-app-production --timeout=300s
+          echo "Rollback completed"
+
+      - name: Notify on success
+        if: success()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "Production deployment successful for ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment Successful* :rocket:\n\nRepository: ${{ github.repository }}\nVersion: ${{ needs.validate.outputs.version }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "Production deployment FAILED for ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment FAILED* :x:\n\nRepository: ${{ github.repository }}\nVersion: ${{ needs.validate.outputs.version }}\nWorkflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true

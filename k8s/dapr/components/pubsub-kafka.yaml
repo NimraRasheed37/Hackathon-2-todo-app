@@ -1,0 +1,36 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+  namespace: todo-app
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+    # Kafka broker addresses
+    - name: brokers
+      value: "kafka:9092"
+    # Consumer group for this application
+    - name: consumerGroup
+      value: "todo-app"
+    # Authentication type (none for local, sasl for production)
+    - name: authType
+      value: "none"
+    # Initial offset for new consumer groups
+    - name: initialOffset
+      value: "oldest"
+    # Maximum message size
+    - name: maxMessageBytes
+      value: "1048576"
+    # Enable automatic topic creation
+    - name: disableEntityManagement
+      value: "false"
+    # Version compatibility
+    - name: version
+      value: "2.6.0"
+scopes:
+  - backend
+  - recurring-service
+  - reminder-service
+  - notification-service
+  - audit-service

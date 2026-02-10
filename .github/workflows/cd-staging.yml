@@ -1,0 +1,89 @@
+name: CD - Staging
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ${{ github.repository }}/todo-backend
+  FRONTEND_IMAGE: ${{ github.repository }}/todo-frontend
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "v1.28.0"
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Update image tags
+        working-directory: k8s/cloud/overlays/staging
+        run: |
+          kustomize edit set image \
+            ghcr.io/your-org/todo-backend=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }} \
+            ghcr.io/your-org/todo-frontend=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+
+      - name: Deploy to staging
+        run: |
+          kubectl apply -k k8s/cloud/overlays/staging
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/staging-backend-deployment -n todo-app-staging --timeout=300s
+          kubectl rollout status deployment/staging-frontend-deployment -n todo-app-staging --timeout=300s
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n todo-app-staging
+          kubectl get services -n todo-app-staging
+
+      - name: Run smoke tests
+        run: |
+          BACKEND_URL="${{ vars.STAGING_API_URL || 'https://staging-api.your-domain.com' }}"
+          for i in {1..5}; do
+            if curl -sf "$BACKEND_URL/health"; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 10
+          done
+          echo "Health check failed after 5 attempts"
+          exit 1
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "Staging deployment failed for ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Staging Deployment Failed*\n\nRepository: ${{ github.repository }}\nCommit: ${{ github.sha }}\nWorkflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true

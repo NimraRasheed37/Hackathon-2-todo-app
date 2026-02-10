@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-config
+  labels:
+    app.kubernetes.io/name: todo-app
+    app.kubernetes.io/component: config
+data:
+  # Frontend configuration
+  NEXT_PUBLIC_API_URL: "http://todo-backend:8000"
+  BETTER_AUTH_URL: "http://todo.local"
+
+  # Backend configuration
+  CORS_ORIGINS: "http://todo.local"
+  LOG_LEVEL: "info"
+  ENVIRONMENT: "local"

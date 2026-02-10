@@ -1,5 +1,6 @@
 """AI tool implementations for task management."""
 
+from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from sqlmodel import Session
@@ -7,7 +8,7 @@ from sqlmodel import Session
 from src.core.logging_config import get_logger
 from src.models.task import Task
 from src.repositories.task_repository import TaskRepository
-from src.schemas.task import TaskCreate, TaskUpdate
+from src.schemas.task import Priority, TaskCreate, TaskUpdate
 
 logger = get_logger(__name__)
 
@@ -51,6 +52,8 @@ def add_task(
     user_id: str,
     title: str,
     description: Optional[str] = None,
+    priority: Optional[str] = None,
+    due_date: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Add a new task for the user.
@@ -60,6 +63,8 @@ def add_task(
         user_id: The authenticated user's ID
         title: Task title (max 500 chars)
         description: Optional task description
+        priority: Optional priority level (none, low, medium, high, critical)
+        due_date: Optional due date in ISO 8601 format
 
     Returns:
         Tool response dict with success status and data
@@ -80,20 +85,54 @@ def add_task(
                 "message": "Failed to create task"
             }
 
+        # Parse priority
+        task_priority = Priority.NONE
+        if priority:
+            try:
+                task_priority = Priority(priority.lower())
+            except ValueError:
+                return {
+                    "success": False,
+                    "error": "VALIDATION_ERROR",
+                    "message": f"Invalid priority '{priority}'. Use: none, low, medium, high, critical"
+                }
+
+        # Parse due date
+        task_due_date = None
+        if due_date:
+            try:
+                task_due_date = datetime.fromisoformat(due_date.replace("Z", "+00:00"))
+            except (ValueError, TypeError):
+                return {
+                    "success": False,
+                    "error": "VALIDATION_ERROR",
+                    "message": f"Invalid date format '{due_date}'. Use ISO 8601 format (e.g., 2025-12-31T23:59:00)"
+                }
+
         repo = TaskRepository(session)
-        task_data = TaskCreate(title=title.strip(), description=description)
+        task_data = TaskCreate(
+            title=title.strip(),
+            description=description,
+            priority=task_priority,
+            due_date=task_due_date,
+        )
         task = repo.create(user_id, task_data)
 
         logger.info(f"Created task {task.id} for user {user_id}")
 
+        result_data = {
+            "task_id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "priority": task.priority.value if hasattr(task.priority, 'value') else str(task.priority),
+        }
+        if task.due_date:
+            result_data["due_date"] = task.due_date.isoformat()
+
         return {
             "success": True,
-            "data": {
-                "task_id": task.id,
-                "title": task.title,
-                "description": task.description,
-                "completed": task.completed,
-            },
+            "data": result_data,
             "message": "Task created successfully"
         }
     except Exception as e:
@@ -125,15 +164,18 @@ def list_tasks(
         repo = TaskRepository(session)
         tasks = repo.get_all_by_user(user_id, status=status)
 
-        task_list = [
-            {
+        task_list = []
+        for t in tasks:
+            task_info = {
                 "id": t.id,
                 "title": t.title,
                 "description": t.description,
                 "completed": t.completed,
+                "priority": t.priority.value if hasattr(t.priority, 'value') else str(t.priority),
             }
-            for t in tasks
-        ]
+            if t.due_date:
+                task_info["due_date"] = t.due_date.isoformat()
+            task_list.append(task_info)
 
         return {
             "success": True,
@@ -293,9 +335,11 @@ def update_task(
     task_identifier: str,
     new_title: Optional[str] = None,
     new_description: Optional[str] = None,
+    new_priority: Optional[str] = None,
+    new_due_date: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Update a task's title or description.
+    Update a task's title, description, priority, or due date.
 
     Args:
         session: Database session
@@ -303,16 +347,18 @@ def update_task(
         task_identifier: Task ID or partial title to match
         new_title: New title for the task
         new_description: New description for the task
+        new_priority: New priority level (none, low, medium, high, critical)
+        new_due_date: New due date in ISO 8601 format, or 'clear' to remove
 
     Returns:
         Tool response dict with success status and updated task data
     """
     try:
-        if not new_title and new_description is None:
+        if not new_title and new_description is None and not new_priority and not new_due_date:
             return {
                 "success": False,
                 "error": "VALIDATION_ERROR",
-                "message": "No updates provided. Please specify a new title or description."
+                "message": "No updates provided. Please specify a new title, description, priority, or due date."
             }
 
         if new_title and len(new_title) > 500:
@@ -352,20 +398,46 @@ def update_task(
             update_data["title"] = new_title.strip()
         if new_description is not None:
             update_data["description"] = new_description
+        if new_priority:
+            try:
+                update_data["priority"] = Priority(new_priority.lower())
+            except ValueError:
+                return {
+                    "success": False,
+                    "error": "VALIDATION_ERROR",
+                    "message": f"Invalid priority '{new_priority}'. Use: none, low, medium, high, critical"
+                }
+        if new_due_date:
+            if new_due_date.lower() == "clear":
+                update_data["due_date"] = None
+            else:
+                try:
+                    update_data["due_date"] = datetime.fromisoformat(new_due_date.replace("Z", "+00:00"))
+                except (ValueError, TypeError):
+                    return {
+                        "success": False,
+                        "error": "VALIDATION_ERROR",
+                        "message": f"Invalid date format '{new_due_date}'. Use ISO 8601 format (e.g., 2025-12-31T23:59:00)"
+                    }
 
         task_update = TaskUpdate(**update_data)
         updated_task = repo.update(task.id, user_id, task_update)
 
         logger.info(f"Updated task {task.id} for user {user_id}")
 
+        result_data = {
+            "task_id": updated_task.id,
+            "old_title": old_title,
+            "new_title": updated_task.title,
+            "description": updated_task.description,
+            "priority": updated_task.priority.value if hasattr(updated_task.priority, 'value') else str(updated_task.priority),
+        }
+        if updated_task.due_date:
+            result_data["due_date"] = updated_task.due_date.isoformat()
+
         return {
             "success": True,
-            "data": {
-                "task_id": updated_task.id,
-                "old_title": old_title,
-                "new_title": updated_task.title,
-                "description": updated_task.description,
-            },
+            "data": result_data,
             "message": "Task updated successfully"
         }
     except Exception as e:
@@ -396,6 +468,8 @@ def create_tool_executor(session: Session, user_id: str):
                 user_id,
                 title=arguments.get("title", ""),
                 description=arguments.get("description"),
+                priority=arguments.get("priority"),
+                due_date=arguments.get("due_date"),
             )
         elif tool_name == "list_tasks":
             return list_tasks(
@@ -422,6 +496,8 @@ def create_tool_executor(session: Session, user_id: str):
                 task_identifier=arguments.get("task_identifier", ""),
                 new_title=arguments.get("new_title"),
                 new_description=arguments.get("new_description"),
+                new_priority=arguments.get("new_priority"),
+                new_due_date=arguments.get("new_due_date"),
             )
         else:
             return {

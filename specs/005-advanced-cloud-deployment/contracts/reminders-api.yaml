@@ -1,0 +1,297 @@
+openapi: 3.0.3
+info:
+  title: Todo App - Reminders API
+  version: 1.0.0
+  description: API for managing task reminders
+
+paths:
+  /api/tasks/{task_id}/reminders:
+    post:
+      summary: Create a reminder for a task
+      operationId: createReminder
+      tags:
+        - Reminders
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReminderCreate'
+      responses:
+        '201':
+          description: Reminder created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reminder'
+        '400':
+          description: Invalid reminder configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Task not found
+
+    get:
+      summary: List reminders for a task
+      operationId: listTaskReminders
+      tags:
+        - Reminders
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of reminders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reminder'
+        '404':
+          description: Task not found
+
+  /api/tasks/{task_id}/reminders/{reminder_id}:
+    get:
+      summary: Get a specific reminder
+      operationId: getReminder
+      tags:
+        - Reminders
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: reminder_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reminder details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reminder'
+        '404':
+          description: Reminder not found
+
+    put:
+      summary: Update a reminder
+      operationId: updateReminder
+      tags:
+        - Reminders
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: reminder_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReminderUpdate'
+      responses:
+        '200':
+          description: Reminder updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reminder'
+        '400':
+          description: Invalid reminder configuration
+        '404':
+          description: Reminder not found
+
+    delete:
+      summary: Delete a reminder
+      operationId: deleteReminder
+      tags:
+        - Reminders
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: reminder_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Reminder deleted
+        '404':
+          description: Reminder not found
+
+  /api/reminders:
+    get:
+      summary: List all user's reminders
+      operationId: listUserReminders
+      tags:
+        - Reminders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, sent, cancelled]
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of reminders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderList'
+
+components:
+  schemas:
+    ReminderCreate:
+      type: object
+      required:
+        - reminderType
+      properties:
+        reminderType:
+          type: string
+          enum: [relative, absolute]
+        relativeMinutes:
+          type: integer
+          minimum: 1
+          description: Minutes before due date (required if type is 'relative')
+        absoluteTime:
+          type: string
+          format: date-time
+          description: Specific time (required if type is 'absolute')
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [in_app, email, push]
+          default: [in_app]
+
+    ReminderUpdate:
+      type: object
+      properties:
+        reminderType:
+          type: string
+          enum: [relative, absolute]
+        relativeMinutes:
+          type: integer
+          minimum: 1
+        absoluteTime:
+          type: string
+          format: date-time
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [in_app, email, push]
+
+    Reminder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        reminderType:
+          type: string
+          enum: [relative, absolute]
+        relativeMinutes:
+          type: integer
+        absoluteTime:
+          type: string
+          format: date-time
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [in_app, email, push]
+        status:
+          type: string
+          enum: [pending, sent, cancelled]
+        scheduledAt:
+          type: string
+          format: date-time
+        sentAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    ReminderList:
+      type: object
+      properties:
+        reminders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reminder'
+        total:
+          type: integer
+        hasMore:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object

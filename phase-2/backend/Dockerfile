@@ -24,6 +24,12 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code
 COPY src/ ./src/
+COPY alembic/ ./alembic/
+COPY alembic.ini .
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 # Change ownership to non-root user
 RUN chown -R appuser:appuser /app
@@ -33,6 +39,11 @@ USER appuser
 # Expose port (Railway will set PORT env var)
 EXPOSE 8000
 
-# Run the application using shell form to allow $PORT substitution
-# Railway sets PORT env var; fallback to 8000 for local development
-CMD uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Environment variable to control run mode: api (default), consumer, or both
+ENV RUN_MODE=api
+
+# Use entrypoint script to handle different run modes
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+# Default command (for api mode)
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

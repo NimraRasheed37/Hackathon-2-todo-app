@@ -1,0 +1,44 @@
+apiVersion: dapr.io/v1alpha1
+kind: Configuration
+metadata:
+  name: todo-config
+  namespace: todo-app
+spec:
+  # Enable mTLS between sidecars
+  mtls:
+    enabled: true
+    workloadCertTTL: "24h"
+    allowedClockSkew: "15m"
+
+  # Tracing configuration
+  tracing:
+    samplingRate: "1"
+    zipkin:
+      endpointAddress: "http://zipkin:9411/api/v2/spans"
+
+  # Metrics configuration
+  metric:
+    enabled: true
+    http:
+      increasedCardinality: false
+
+  # API access control
+  accessControl:
+    defaultAction: allow
+    trustDomain: "todo-app"
+
+  # App API configuration
+  appHttpMaxRequestSize: 8
+
+  # Pub/Sub configuration
+  features:
+    - name: "AppHealthCheck"
+      enabled: true
+    - name: "ActorStateTTL"
+      enabled: false
+
+  # Logging
+  logging:
+    apiLogging:
+      enabled: true
+      obfuscateURLs: false

@@ -40,6 +40,7 @@ A modern, full-stack Todo application built with Next.js and FastAPI, demonstrat
 - **Backend Hosting**: Railway
 - **Database**: Neon PostgreSQL
 - **Local Development**: Docker Compose
+- **Kubernetes**: Minikube + Helm (local), production-ready manifests
 
 ## Quick Start
 
@@ -62,7 +63,42 @@ docker-compose up
 # Backend: http://localhost:8000
 ```
 
-### Option 2: Manual Setup
+### Option 2: Kubernetes (Minikube)
+
+Deploy to a local Kubernetes cluster with Helm:
+
+```bash
+# Prerequisites: minikube, kubectl, helm, docker
+
+# 1. Start Minikube
+minikube start --memory=4096 --cpus=2
+minikube addons enable ingress
+
+# 2. Build images using Minikube's Docker
+eval $(minikube docker-env)
+docker build -t todo-frontend:local ./phase-2/frontend
+docker build -t todo-backend:local ./phase-2/backend
+
+# 3. Configure secrets
+cp k8s/helm/todo-app/values.yaml k8s/helm/todo-app/values-local.yaml
+# Edit values-local.yaml with your DATABASE_URL, OPENAI_API_KEY, JWT_SECRET, BETTER_AUTH_SECRET
+
+# 4. Deploy with Helm
+helm upgrade --install todo-app ./k8s/helm/todo-app -f ./k8s/helm/todo-app/values-local.yaml
+
+# 5. Add hosts entry
+echo "$(minikube ip) todo.local" | sudo tee -a /etc/hosts
+
+# 6. Access http://todo.local
+```
+
+Or use the automated script:
+```bash
+./scripts/deploy-local.sh   # Linux/macOS
+.\scripts\deploy-local.ps1  # Windows PowerShell
+```
+
+### Option 3: Manual Setup
 
 **Backend:**
 ```bash
@@ -97,6 +133,15 @@ Hackathon-2-todo-app/
 │
 ├── phase-1/                     # Console app (legacy)
 │   └── src/                     # Python console application
+│
+├── k8s/                         # Kubernetes deployment
+│   ├── manifests/               # Raw K8s manifests
+│   └── helm/todo-app/           # Helm chart
+│
+├── scripts/                     # Deployment scripts
+│   ├── deploy-local.sh/.ps1     # Automated deployment
+│   ├── test-deployment.sh/.ps1  # Deployment tests
+│   └── cleanup.sh/.ps1          # Cleanup scripts
 │
 ├── phase-2/                     # Full-stack web app
 │   ├── backend/                 # FastAPI backend
@@ -230,8 +275,9 @@ This project was built using **Spec-Driven Development (SDD)** with AI assistanc
 ### Modules Developed
 1. **Backend API & Database**: FastAPI REST API with PostgreSQL
 2. **Auth & User Management**: JWT authentication with Better Auth
-3. **Frontend UI**: Next.js with Tailwind CSS
+3. **Frontend UI**: Next.js with Tailwind CSS and AI Chatbot
 4. **Integration & Deployment**: Docker, Railway, Vercel
+5. **Kubernetes Deployment**: Minikube, Helm charts, health probes
 
 ## Contributing
 

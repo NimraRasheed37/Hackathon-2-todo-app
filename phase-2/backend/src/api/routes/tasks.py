@@ -2,12 +2,14 @@
 
 from typing import List, Literal
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, BackgroundTasks
 
 from src.api.dependencies import CurrentUserDep, TaskRepositoryDep
 from src.core.exceptions import AuthorizationError, TaskNotFoundError
 from src.core.logging_config import get_logger
 from src.core.security import log_security_event, validate_user_authorization
+from src.events.producer import publish_event, publish_to_audit
+from src.events.schemas import TaskEvent
 from src.schemas.task import TaskCreate, TaskRead, TaskUpdate
 
 router = APIRouter()
@@ -22,7 +24,7 @@ async def list_tasks(
     status_filter: Literal["all", "pending", "completed"] = Query(
         default="all", alias="status"
     ),
-    sort: Literal["created", "title", "updated"] = Query(default="created"),
+    sort: Literal["created", "title", "updated", "priority", "due_date"] = Query(default="created"),
 ):
     """List all tasks for a user with optional filtering and sorting."""
     # Authorization check: user can only access their own tasks
@@ -30,7 +32,7 @@ async def list_tasks(
 
     # Validate query parameters
     valid_status = ["all", "pending", "completed"]
-    valid_sort = ["created", "title", "updated"]
+    valid_sort = ["created", "title", "updated", "priority", "due_date"]
 
     if status_filter not in valid_status:
         raise HTTPException(
@@ -58,12 +60,26 @@ async def create_task(
     task_data: TaskCreate,
     current_user: CurrentUserDep,
     repository: TaskRepositoryDep,
+    background_tasks: BackgroundTasks,
 ):
     """Create a new task for a user."""
     # Authorization check: user can only create tasks for themselves
     validate_user_authorization(current_user.id, user_id)
 
     task = repository.create(user_id, task_data)
+
+    # Publish task created event in background
+    event = TaskEvent.task_created(
+        task_id=str(task.id),
+        user_id=user_id,
+        title=task.title,
+        description=task.description,
+        priority=task.priority.value if task.priority else "none",
+        due_date=task.due_date.isoformat() if task.due_date else None,
+    )
+    background_tasks.add_task(publish_event, event)
+    background_tasks.add_task(publish_to_audit, event)
+
     return task
 
 
@@ -91,6 +107,7 @@ async def update_task(
     task_update: TaskUpdate,
     current_user: CurrentUserDep,
     repository: TaskRepositoryDep,
+    background_tasks: BackgroundTasks,
 ):
     """Update a task's title and/or description."""
     # Authorization check: user can only update their own tasks
@@ -98,6 +115,17 @@ async def update_task(
 
     try:
         task = repository.update(task_id, user_id, task_update)
+
+        # Publish task updated event in background
+        changes = task_update.model_dump(exclude_unset=True)
+        event = TaskEvent.task_updated(
+            task_id=str(task_id),
+            user_id=user_id,
+            changes=changes,
+        )
+        background_tasks.add_task(publish_event, event)
+        background_tasks.add_task(publish_to_audit, event)
+
         return task
     except TaskNotFoundError:
         raise
@@ -109,6 +137,7 @@ async def toggle_task_completion(
     task_id: int,
     current_user: CurrentUserDep,
     repository: TaskRepositoryDep,
+    background_tasks: BackgroundTasks,
 ):
     """Toggle task completion status."""
     # Authorization check: user can only toggle their own tasks
@@ -116,6 +145,27 @@ async def toggle_task_completion(
 
     try:
         task = repository.toggle_complete(task_id, user_id)
+
+        # Publish task completed event if task was marked as complete
+        if task.completed:
+            # Check if task has recurrence pattern
+            has_recurrence = getattr(task, 'recurrence_pattern', None) is not None
+            event = TaskEvent.task_completed(
+                task_id=str(task_id),
+                user_id=user_id,
+                has_recurrence=has_recurrence,
+            )
+            background_tasks.add_task(publish_event, event)
+            background_tasks.add_task(publish_to_audit, event)
+        else:
+            # Task was uncompleted - publish update event
+            event = TaskEvent.task_updated(
+                task_id=str(task_id),
+                user_id=user_id,
+                changes={"completed": False},
+            )
+            background_tasks.add_task(publish_event, event)
+
         return task
     except TaskNotFoundError:
         raise
@@ -130,6 +180,7 @@ async def delete_task(
     task_id: int,
     current_user: CurrentUserDep,
     repository: TaskRepositoryDep,
+    background_tasks: BackgroundTasks,
 ):
     """Delete a task permanently."""
     # Authorization check: user can only delete their own tasks
@@ -137,5 +188,13 @@ async def delete_task(
 
     try:
         repository.delete(task_id, user_id)
+
+        # Publish task deleted event in background
+        event = TaskEvent.task_deleted(
+            task_id=str(task_id),
+            user_id=user_id,
+        )
+        background_tasks.add_task(publish_event, event)
+        background_tasks.add_task(publish_to_audit, event)
     except TaskNotFoundError:
         raise

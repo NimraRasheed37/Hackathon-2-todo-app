@@ -1,9 +1,19 @@
 """Pydantic schemas for task API requests and responses."""
 
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
+
+
+class Priority(str, Enum):
+    """Task priority levels."""
+    NONE = "none"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
 
 
 class TaskCreate(BaseModel):
@@ -11,6 +21,8 @@ class TaskCreate(BaseModel):
 
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=1000)
+    priority: Priority = Field(default=Priority.NONE)
+    due_date: Optional[datetime] = Field(default=None)
 
     @field_validator("title")
     @classmethod
@@ -27,6 +39,8 @@ class TaskUpdate(BaseModel):
 
     title: Optional[str] = Field(default=None, min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=1000)
+    priority: Optional[Priority] = Field(default=None)
+    due_date: Optional[datetime] = Field(default=None)
 
     @field_validator("title")
     @classmethod
@@ -42,8 +56,8 @@ class TaskUpdate(BaseModel):
     @model_validator(mode="after")
     def check_at_least_one_field(self) -> "TaskUpdate":
         """Ensure at least one field is provided for update."""
-        if self.title is None and self.description is None:
-            raise ValueError("At least one field (title or description) must be provided")
+        if all(v is None for v in [self.title, self.description, self.priority, self.due_date]):
+            raise ValueError("At least one field must be provided for update")
         return self
 
 
@@ -55,6 +69,8 @@ class TaskRead(BaseModel):
     title: str
     description: Optional[str]
     completed: bool
+    priority: Priority
+    due_date: Optional[datetime]
     created_at: datetime
     updated_at: datetime
 

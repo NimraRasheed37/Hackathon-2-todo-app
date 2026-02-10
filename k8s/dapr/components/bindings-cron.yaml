@@ -1,0 +1,34 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: reminder-cron
+  namespace: todo-app
+spec:
+  type: bindings.cron
+  version: v1
+  metadata:
+    # Run every minute to check for due reminders
+    - name: schedule
+      value: "*/1 * * * *"
+    # Direction: input means Dapr will call our app
+    - name: direction
+      value: "input"
+scopes:
+  - reminder-service
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: recurrence-cron
+  namespace: todo-app
+spec:
+  type: bindings.cron
+  version: v1
+  metadata:
+    # Run every minute to check for recurring tasks
+    - name: schedule
+      value: "*/1 * * * *"
+    - name: direction
+      value: "input"
+scopes:
+  - recurring-service

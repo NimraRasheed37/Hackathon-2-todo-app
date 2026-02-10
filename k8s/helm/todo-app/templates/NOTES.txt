@@ -1,0 +1,37 @@
+🚀 Todo App has been deployed!
+
+{{- if .Values.ingress.enabled }}
+
+📡 Access your application at:
+   http://{{ .Values.ingress.host }}
+
+{{- else }}
+
+📡 Get the application URL by running:
+
+Frontend:
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "todo-app.name" . }},app.kubernetes.io/component=frontend" -o jsonpath="{.items[0].metadata.name}")
+  kubectl port-forward $POD_NAME 3000:3000
+
+Backend API:
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "todo-app.name" . }},app.kubernetes.io/component=backend" -o jsonpath="{.items[0].metadata.name}")
+  kubectl port-forward $POD_NAME 8000:8000
+
+{{- end }}
+
+📊 Check deployment status:
+   kubectl get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+
+📋 View logs:
+   kubectl logs -l app.kubernetes.io/instance={{ .Release.Name }} -f
+
+🔧 Configuration:
+   - Frontend replicas: {{ .Values.frontend.replicas }}
+   - Backend replicas: {{ .Values.backend.replicas }}
+   - Environment: {{ .Values.global.environment }}
+
+⚠️  Remember to configure your secrets before deployment:
+   - DATABASE_URL
+   - OPENAI_API_KEY
+   - JWT_SECRET
+   - BETTER_AUTH_SECRET
