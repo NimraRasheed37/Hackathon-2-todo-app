@@ -72,7 +72,7 @@ class RecurringService:
         """Get the active recurrence for a task."""
         statement = select(TaskRecurrence).where(
             TaskRecurrence.task_id == task_id,
-            TaskRecurrence.is_active == True
+            TaskRecurrence.is_active == True  # noqa: E712
         )
         return self.session.exec(statement).first()
 
@@ -86,7 +86,7 @@ class RecurringService:
             List of recurrences that need to spawn new tasks
         """
         statement = select(TaskRecurrence).where(
-            TaskRecurrence.is_active == True,
+            TaskRecurrence.is_active == True,  # noqa: E712
             TaskRecurrence.next_occurrence <= before
         )
         return list(self.session.exec(statement).all())

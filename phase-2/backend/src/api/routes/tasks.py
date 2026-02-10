@@ -5,9 +5,9 @@ from typing import List, Literal
 from fastapi import APIRouter, HTTPException, Query, status, BackgroundTasks
 
 from src.api.dependencies import CurrentUserDep, TaskRepositoryDep
-from src.core.exceptions import AuthorizationError, TaskNotFoundError
+from src.core.exceptions import TaskNotFoundError
 from src.core.logging_config import get_logger
-from src.core.security import log_security_event, validate_user_authorization
+from src.core.security import validate_user_authorization
 from src.events.producer import publish_event, publish_to_audit
 from src.events.schemas import TaskEvent
 from src.schemas.task import TaskCreate, TaskRead, TaskUpdate

@@ -1,5 +1,4 @@
 """Cache service using Dapr state store for caching."""
-import json
 from typing import Optional, Any
 import os
 
@@ -181,4 +180,4 @@ async def invalidate_task(task_id: int) -> bool:
 
 
 # Import asyncio for get_or_set
-import asyncio
+import asyncio  # noqa: E402

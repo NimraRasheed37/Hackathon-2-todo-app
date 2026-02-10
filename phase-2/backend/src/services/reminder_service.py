@@ -6,7 +6,6 @@ from typing import Optional, List
 from sqlmodel import Session, select
 
 from src.models.reminder import TaskReminder
-from src.models.task import Task
 from src.schemas.reminder import ReminderCreate, ReminderType
 from src.core.logging_config import get_logger
 

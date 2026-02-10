@@ -1,7 +1,6 @@
 """Consumer runner for starting all Kafka consumers via Dapr subscriptions."""
 import asyncio
 import os
-from typing import Any, Dict
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse

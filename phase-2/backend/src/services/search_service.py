@@ -1,10 +1,8 @@
 """Search service for full-text search and filtering of tasks."""
 
-from typing import Optional, List, Tuple
-from datetime import datetime
+from typing import List, Tuple
 
-from sqlmodel import Session, select, func, and_, or_
-from sqlalchemy import text
+from sqlmodel import Session, select, func, or_
 
 from src.models.task import Task
 from src.models.tag import Tag, TaskTag
@@ -114,9 +112,9 @@ class SearchService:
             status_conditions = []
             for status in query.status:
                 if status == TaskStatus.COMPLETED:
-                    status_conditions.append(Task.completed == True)
+                    status_conditions.append(Task.completed == True)  # noqa: E712
                 elif status == TaskStatus.PENDING:
-                    status_conditions.append(Task.completed == False)
+                    status_conditions.append(Task.completed == False)  # noqa: E712
 
             if status_conditions:
                 statement = statement.where(or_(*status_conditions))
@@ -152,7 +150,7 @@ class SearchService:
         if query.has_recurrence is not None:
             recurrence_subquery = (
                 select(TaskRecurrence.task_id)
-                .where(TaskRecurrence.is_active == True)
+                .where(TaskRecurrence.is_active == True)  # noqa: E712
                 .distinct()
             )
             if query.has_recurrence:
@@ -242,7 +240,7 @@ class SearchService:
         # Check for recurrence
         recurrence_statement = select(TaskRecurrence).where(
             TaskRecurrence.task_id == task.id,
-            TaskRecurrence.is_active == True
+            TaskRecurrence.is_active == True  # noqa: E712
         )
         has_recurrence = self.session.exec(recurrence_statement).first() is not None
 

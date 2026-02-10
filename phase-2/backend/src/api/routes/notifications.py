@@ -1,6 +1,5 @@
 """Notifications API routes."""
 
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, status
 
@@ -9,7 +8,6 @@ from src.core.logging_config import get_logger
 from src.core.security import validate_user_authorization
 from src.schemas.reminder import (
     NotificationList,
-    NotificationResponse,
     MarkNotificationsRead,
 )
 from src.services.notification_service import NotificationService

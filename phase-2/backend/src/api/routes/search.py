@@ -1,6 +1,6 @@
 """Search API routes."""
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query
 
 from src.api.dependencies import CurrentUserDep, SessionDep
 from src.core.logging_config import get_logger

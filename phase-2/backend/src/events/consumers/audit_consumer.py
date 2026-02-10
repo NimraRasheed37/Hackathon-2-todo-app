@@ -1,5 +1,4 @@
 """Consumer for logging all events to the audit log."""
-from datetime import datetime, timezone
 from typing import Any, Dict
 
 from sqlmodel import Session

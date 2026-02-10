@@ -7,7 +7,6 @@ from src.core.logging_config import get_logger
 from src.database import engine
 from src.events.producer import publish_event
 from src.events.schemas import EventType, ReminderEvent
-from src.models.task import Task
 from src.schemas.reminder import NotificationCreate, NotificationType
 from src.services.notification_service import NotificationService
 from src.services.reminder_service import ReminderService

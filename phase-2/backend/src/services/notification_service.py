@@ -74,20 +74,20 @@ class NotificationService:
         base_query = select(Notification).where(Notification.user_id == user_id)
 
         if unread_only:
-            base_query = base_query.where(Notification.read == False)
+            base_query = base_query.where(Notification.read == False)  # noqa: E712
 
         # Get total count
         count_query = select(func.count()).select_from(Notification).where(
             Notification.user_id == user_id
         )
         if unread_only:
-            count_query = count_query.where(Notification.read == False)
+            count_query = count_query.where(Notification.read == False)  # noqa: E712
         total = self.session.exec(count_query).one()
 
         # Get unread count
         unread_query = select(func.count()).select_from(Notification).where(
             Notification.user_id == user_id,
-            Notification.read == False
+            Notification.read == False  # noqa: E712
         )
         unread_count = self.session.exec(unread_query).one()
 
@@ -137,7 +137,7 @@ class NotificationService:
         statement = select(Notification).where(
             Notification.id.in_(notification_ids),
             Notification.user_id == user_id,
-            Notification.read == False
+            Notification.read == False  # noqa: E712
         )
         notifications = list(self.session.exec(statement).all())
 
@@ -166,7 +166,7 @@ class NotificationService:
         """
         statement = select(Notification).where(
             Notification.user_id == user_id,
-            Notification.read == False
+            Notification.read == False  # noqa: E712
         )
         notifications = list(self.session.exec(statement).all())
 

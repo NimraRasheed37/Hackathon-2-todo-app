@@ -1,7 +1,7 @@
 """Audit service for logging events to the audit log table."""
 
 from datetime import datetime, timezone
-from typing import Optional, List, Any
+from typing import Optional, List
 
 from sqlmodel import Session, select, func
 from sqlalchemy import Column
@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 
 # Note: This model is defined here to avoid circular imports
 # The actual table is created by migration 007
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel  # noqa: E402
 
 
 class AuditLog(SQLModel, table=True):
