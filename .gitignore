@@ -16,7 +16,8 @@ build/
 htmlcov/
 .tox/
 .nox/
-.nul
+nul
+
 # Node.js / JavaScript / TypeScript
 node_modules/
 .next/
