@@ -20,6 +20,64 @@ export interface Session {
 
 // Task Types
 
+// Phase 5: Priority Types
+export type TaskPriority = "critical" | "high" | "medium" | "low" | "none";
+
+// Phase 5: Recurrence Types
+export type RecurrenceFrequency = "daily" | "weekly" | "monthly" | "yearly" | "custom";
+
+export interface RecurrencePattern {
+  frequency: RecurrenceFrequency;
+  interval: number;
+  daysOfWeek?: number[];
+  dayOfMonth?: number;
+  endDate?: string;
+  maxOccurrences?: number;
+}
+
+// Phase 5: Tag Types
+export interface Tag {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  icon?: string;
+  usage_count: number;
+  created_at: string;
+}
+
+// Phase 5: Reminder Types
+export type ReminderType = "relative" | "absolute";
+export type ReminderChannel = "in_app" | "email" | "push";
+export type ReminderStatus = "pending" | "sent" | "cancelled";
+
+export interface TaskReminder {
+  id: string;
+  task_id: string;
+  user_id: string;
+  reminder_type: ReminderType;
+  relative_minutes?: number;
+  absolute_time?: string;
+  channels: ReminderChannel[];
+  status: ReminderStatus;
+  scheduled_at: string;
+  sent_at?: string;
+  created_at: string;
+}
+
+// Phase 5: Notification Types
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  message?: string;
+  reference_type?: string;
+  reference_id?: string;
+  read: boolean;
+  created_at: string;
+}
+
 /**
  * Task entity from backend API
  */
@@ -29,6 +87,13 @@ export interface Task {
   title: string;
   description: string | null;
   completed: boolean;
+  // Phase 5: New fields
+  priority: TaskPriority;
+  due_date: string | null;
+  recurrence_pattern: RecurrencePattern | null;
+  parent_task_id: string | null;
+  occurrence_number: number;
+  tags: Tag[];
   created_at: string; // ISO datetime
   updated_at: string; // ISO datetime
 }
@@ -39,6 +104,11 @@ export interface Task {
 export interface TaskCreate {
   title: string; // 1-200 characters, required
   description?: string; // 0-1000 characters, optional
+  // Phase 5: New fields
+  priority?: TaskPriority;
+  due_date?: string;
+  recurrence_pattern?: RecurrencePattern;
+  tag_ids?: string[];
 }
 
 /**
@@ -47,6 +117,11 @@ export interface TaskCreate {
 export interface TaskUpdate {
   title?: string; // 1-200 characters
   description?: string; // 0-1000 characters
+  // Phase 5: New fields
+  priority?: TaskPriority;
+  due_date?: string | null;
+  recurrence_pattern?: RecurrencePattern | null;
+  tag_ids?: string[];
 }
 
 // API Response Types
@@ -114,7 +189,28 @@ export type FilterStatus = "all" | "pending" | "completed";
 /**
  * Task sort options
  */
-export type SortOption = "created" | "title" | "updated";
+export type SortOption = "created" | "title" | "updated" | "priority" | "due_date";
+
+// Phase 5: Search Types
+export interface SearchQuery {
+  text?: string;
+  status?: FilterStatus[];
+  priority?: TaskPriority[];
+  tags?: string[];
+  dueDateFrom?: string;
+  dueDateTo?: string;
+  hasRecurrence?: boolean;
+  sortBy?: "relevance" | "dueDate" | "priority" | "createdAt";
+  sortOrder?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
+}
+
+export interface SearchResults {
+  results: Task[];
+  total: number;
+  hasMore: boolean;
+}
 
 // Component Props Types
 
